@@ -85,12 +85,11 @@ func main() {
 		fmt.Printf("we're doing some debugging...\n")
 		time.Sleep(time.Second * 10)
 
-		// issue: https://github.com/golang/go/issues/7699
-		// syscall.PtraceDetach, detach error: no such process
-		//
-		// Why? because the ptrace requests must come from the same tracer thread
-		//err = syscall.PtraceDetach(int(pid))
+		// MUST: call runtime.LockOSThead() first
+		err = syscall.PtraceDetach(int(pid))
 
+		// 在没有执行lockOsThread操作之前，测试系统调用参数影响，可见对信号的处理是需要考虑的
+		// 在执行lockOsThread之后，信号参数就没影响了
 		//err = ptraceDetach(int(pid), 1) // sig:1,fail
 		//err = ptraceDetach(int(pid), 0) // sig:0,ok
 		if err != nil {
@@ -127,7 +126,12 @@ func checkPid(pid int) bool {
 // 如果在ptrace之前不先调用runtime.LockOSThread()，直接使用syscall.PtraceDetach(pid)会报错，提示no such process，
 // 但是这个函数却可以成功，对比了下，走的都是相同的系统调用syscall.Syscall6，区别是有一个参数不同，但是我不知道这个参数的具体作用是什么
 //
-// 在没有os.LockOSThread(pid)之前，
+// 在没有执行lockOsThread操作之前，测试系统调用参数影响，可见对信号的处理是需要考虑的
+// 在执行lockOsThread之后，信号参数就没影响了
+//err = ptraceDetach(int(pid), 1) // sig:1,fail, detach失败: no such process
+//err = ptraceDetach(int(pid), 0) // sig:0,ok, detach成功
+//
+// 在没有os.LockOSThread()之前，
 // ptraceDetach(pid, 0)，ok，可以正常detach，但是ptraceDetach(pid, 1)不行，这里的第2个参数对应syscall.Syscall6里面的一个参数，
 // 暂时不清楚对应参数的含义，没有明确说明！看上去像是控制信号的，tracee stop状态和signal stop状态有区别，需要显示处理。
 //
