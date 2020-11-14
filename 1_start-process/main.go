@@ -24,6 +24,9 @@ func main() {
 		prog := os.Args[2]
 		progCmd := exec.Command(prog)
 		buf, err := progCmd.CombinedOutput()
+
+		fmt.Fprintf(os.Stdout, "tracee pid: %d\n", progCmd.Process.Pid)
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s exec error: %v, \n\n%s\n\n", err, string(buf))
 			os.Exit(1)
