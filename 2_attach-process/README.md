@@ -4,7 +4,7 @@
 
 我们可以bash启动一个命令，让其一直运行，然后获取其pid，并让godbg attach将其挂住，观察程序的暂停、恢复执行。
 
-比如，我们在bash里面先执行以下命令，它会每隔一秒打印一下当前的pid，以及计数器：
+比如，我们在bash里面先执行以下命令，它会每隔1秒打印一下当前的pid：
 
 ```bash
 $ while [ 1 -eq 1 ]; do t=`date`; echo "$t pid: $$"; sleep 1; done
