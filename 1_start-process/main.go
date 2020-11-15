@@ -22,25 +22,11 @@ func main() {
 	switch cmd {
 	case cmdExec:
 		prog := os.Args[2]
-
-		fin, err := os.Lstat(prog)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "lstat error: %v\n\n", err)
-			os.Exit(1)
-		}
-
-		if fin.IsDir() {
-			fmt.Fprintf(os.Stderr, "%s is directory\n\n", prog)
-			os.Exit(1)
-		}
-
-		if fin.Mode()&0111 == 0 {
-			fmt.Fprintf(os.Stderr, "%s not executable\n\n", prog)
-			os.Exit(1)
-		}
-
 		progCmd := exec.Command(prog)
 		buf, err := progCmd.CombinedOutput()
+
+		fmt.Fprintf(os.Stdout, "tracee pid: %d\n", progCmd.Process.Pid)
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s exec error: %v, \n\n%s\n\n", err, string(buf))
 			os.Exit(1)
