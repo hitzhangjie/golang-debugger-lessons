@@ -14,6 +14,7 @@ const (
 	cmdGroupKey         = "cmd_group_key"
 	cmdGroupBreakpoints = "breakpoint"
 	cmdGroupSource      = "code"
+	cmdGroupCtrlFlow    = "ctrlflow"
 	cmdGroupInfo        = "information"
 	cmdGroupOthers      = "other"
 
