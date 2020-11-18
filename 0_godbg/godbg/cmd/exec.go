@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"strings"
 
+	"godbg/cmd/debug"
+
 	"github.com/spf13/cobra"
 )
 
@@ -29,6 +31,7 @@ var execCmd = &cobra.Command{
 	Long:  `调试可执行程序`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("exec %s\n", strings.Join(args, ""))
+		debug.NewDebugShell().Run()
 	},
 }
 

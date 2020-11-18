@@ -18,6 +18,8 @@ package cmd
 import (
 	"fmt"
 
+	"godbg/cmd/debug"
+
 	"github.com/spf13/cobra"
 )
 
@@ -29,6 +31,7 @@ var attachCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		pid, _ := cmd.Flags().GetUint32("pid")
 		fmt.Printf("attach to process %d\n", pid)
+		debug.NewDebugShell().Run()
 	},
 }
 

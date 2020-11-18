@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"os"
 
-	"godbg/cmd/debug"
-
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,9 +35,8 @@ godbg是一个go程序符号级调试器，它是以学习为目的驱动开发�
 希望我们的工作可以为更多人打开一个认识计算机世界的大门，不谢！`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	Run: func(cmd *cobra.Command, args []string) {
-		debug.NewDebugShell().Run()
-	},
+	//Run: func(cmd *cobra.Command, args []string) {
+	//},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -62,7 +59,7 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.
