@@ -8,9 +8,15 @@ import (
 
 var exitCmd = &cobra.Command{
 	Use:   "exit",
-	Short: "Exit prompt",
+	Short: "结束调试会话",
+	Annotations: map[string]string{
+		cmdGroupKey: cmdGroupOthers,
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		os.Exit(0)
 	},
 }
 
+func init() {
+	debugRootCmd.AddCommand(exitCmd)
+}

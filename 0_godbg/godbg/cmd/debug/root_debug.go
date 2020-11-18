@@ -11,17 +11,24 @@ import (
 )
 
 const (
-	commandGroup = "group_of_debug_commands"
-	prefix       = "godbg> "
-	description  = "interactive debugging commands"
+	cmdGroupKey         = "cmd_group_key"
+	cmdGroupBreakpoints = "breakpoints"
+	cmdGroupSource      = "sourcecode"
+	cmdGroupInfo        = "information"
+	cmdGroupOthers      = "other"
+
+	prefix      = "godbg> "
+	description = "interactive debugging commands"
 )
+
+var debugRootCmd = &cobra.Command{
+	Use:   "",
+	Short: description,
+}
 
 // NewDebugShell 创建一个debug专用的交互管理器
 func NewDebugShell() *cobraprompt.CobraPrompt {
-	debugRootCmd := &cobra.Command{
-		Use:   "",
-		Short: description,
-	}
+
 	fn := func() func(cmd *cobra.Command) error {
 		return func(cmd *cobra.Command) error {
 			usage := groupDebugCommands(cmd)
@@ -30,12 +37,11 @@ func NewDebugShell() *cobraprompt.CobraPrompt {
 		}
 	}
 	debugRootCmd.SetUsageFunc(fn())
-	debugRootCmd.AddCommand(breakCmd, clearCmd, exitCmd)
 
 	return &cobraprompt.CobraPrompt{
-		RootCmd:                debugRootCmd,
-		//DynamicSuggestionsFunc: dynamicSuggestions,
-		ResetFlagsFlag:         true,
+		RootCmd: debugRootCmd,
+		DynamicSuggestionsFunc: dynamicSuggestions,
+		ResetFlagsFlag: true,
 		GoPromptOptions: []prompt.Option{
 			prompt.OptionTitle(description),
 			prompt.OptionPrefix(prefix),
@@ -56,7 +62,7 @@ func groupDebugCommands(cmd *cobra.Command) string {
 	for _, c := range cmd.Commands() {
 		// 如果没有指定命令分组，放入other组
 		var groupName string
-		v, ok := c.Annotations[commandGroup]
+		v, ok := c.Annotations[cmdGroupKey]
 		if !ok {
 			groupName = "other"
 		} else {
@@ -83,17 +89,18 @@ func groupDebugCommands(cmd *cobra.Command) string {
 }
 
 func dynamicSuggestions(annotation string, _ prompt.Document) []prompt.Suggest {
+	fmt.Println("annotation ==>", annotation)
 	switch annotation {
-	case "GetFood":
-		return GetFood()
+	case "list":
+		return GetSourceFiles()
 	default:
 		return []prompt.Suggest{}
 	}
 }
 
-func GetFood() []prompt.Suggest {
+func GetSourceFiles() []prompt.Suggest {
 	return []prompt.Suggest{
-		{Text: "apple", Description: "Green apple"},
-		{Text: "tomato", Description: "Red tomato"},
+		{Text: "main.go", Description: "main.go"},
+		{Text: "helloworld.go", Description: "helloworld.go"},
 	}
 }
