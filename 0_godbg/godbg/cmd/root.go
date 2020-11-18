@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"os"
 
+	"godbg/cmd/debug"
+
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -35,8 +37,10 @@ godbg是一个go程序符号级调试器，它是以学习为目的驱动开发�
 希望我们的工作可以为更多人打开一个认识计算机世界的大门，不谢！`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	//Run: func(cmd *cobra.Command, args []string) {
-	//},
+	Run: func(cmd *cobra.Command, args []string) {
+		// TODO comment out this, this should be enabled only in debugging phase
+		debug.NewDebugShell().Run()
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

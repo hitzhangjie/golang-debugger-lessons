@@ -12,8 +12,8 @@ import (
 
 const (
 	cmdGroupKey         = "cmd_group_key"
-	cmdGroupBreakpoints = "breakpoints"
-	cmdGroupSource      = "sourcecode"
+	cmdGroupBreakpoints = "breakpoint"
+	cmdGroupSource      = "code"
 	cmdGroupInfo        = "information"
 	cmdGroupOthers      = "other"
 
@@ -85,10 +85,18 @@ func groupDebugCommands(cmd *cobra.Command) string {
 		groups[groupName] = groupCmds
 	}
 
+	// 按照分组名进行排序
+	groupNames := []string{}
+	for k, _ := range groups {
+		groupNames = append(groupNames, k)
+	}
+	sort.Strings(groupNames)
+
 	// 按照group分组，并对组内命令进行排序
 	buf := bytes.Buffer{}
-	for grp, commands := range groups {
-		buf.WriteString(fmt.Sprintf("[%s]\n", grp))
+	for _, groupName := range groupNames {
+		commands, _ := groups[groupName]
+		buf.WriteString(fmt.Sprintf("[%s]\n", groupName))
 		for _, cmd := range commands {
 			buf.WriteString(fmt.Sprintf("%s\n", cmd))
 		}
