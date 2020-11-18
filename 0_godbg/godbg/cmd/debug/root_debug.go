@@ -21,6 +21,10 @@ const (
 	description = "interactive debugging commands"
 )
 
+const (
+	suggestionListSourceFiles = "ListSourceFiles"
+)
+
 var debugRootCmd = &cobra.Command{
 	Use:   "",
 	Short: description,
@@ -39,9 +43,9 @@ func NewDebugShell() *cobraprompt.CobraPrompt {
 	debugRootCmd.SetUsageFunc(fn())
 
 	return &cobraprompt.CobraPrompt{
-		RootCmd: debugRootCmd,
+		RootCmd:                debugRootCmd,
 		DynamicSuggestionsFunc: dynamicSuggestions,
-		ResetFlagsFlag: true,
+		ResetFlagsFlag:         true,
 		GoPromptOptions: []prompt.Option{
 			prompt.OptionTitle(description),
 			prompt.OptionPrefix(prefix),
@@ -89,9 +93,8 @@ func groupDebugCommands(cmd *cobra.Command) string {
 }
 
 func dynamicSuggestions(annotation string, _ prompt.Document) []prompt.Suggest {
-	fmt.Println("annotation ==>", annotation)
 	switch annotation {
-	case "list":
+	case suggestionListSourceFiles:
 		return GetSourceFiles()
 	default:
 		return []prompt.Suggest{}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	cobraprompt "github.com/stromland/cobra-prompt"
 )
 
 var listCmd = &cobra.Command{
@@ -11,7 +12,8 @@ var listCmd = &cobra.Command{
 	Short:   "查看源码信息",
 	Aliases: []string{"l"},
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupSource,
+		cmdGroupKey:                     cmdGroupSource,
+		cobraprompt.CALLBACK_ANNOTATION: suggestionListSourceFiles,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("list codes in file")
@@ -20,6 +22,4 @@ var listCmd = &cobra.Command{
 
 func init() {
 	debugRootCmd.AddCommand(listCmd)
-
-	listCmd.Flags().StringP("list", "l", "", "显示位置附近源码")
 }
