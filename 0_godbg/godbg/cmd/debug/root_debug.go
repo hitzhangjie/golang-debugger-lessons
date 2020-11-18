@@ -55,13 +55,15 @@ func NewDebugShell() *cobraprompt.CobraPrompt {
 			prompt.OptionSelectedDescriptionBGColor(prompt.Red),
 			// here, hide prompt dropdown list
 			// TODO do we have a better way to show/hide the prompt dropdown list?
-			prompt.OptionMaxSuggestion(0),
-			//prompt.OptionCompletionOnDown(),
-			//prompt.OptionShowCompletionAtStart(),
+			prompt.OptionMaxSuggestion(10),
+			prompt.OptionShowCompletionAtStart(),
 		},
+		EnableSilentPrompt: true,
+		EnableShowAtStart:  true,
 	}
 }
 
+// groupDebugCommands 将各个命令按照分组归类，再展示帮助信息
 func groupDebugCommands(cmd *cobra.Command) string {
 
 	// key:group, val:sorted commands in same group

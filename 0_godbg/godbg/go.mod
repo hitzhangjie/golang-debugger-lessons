@@ -2,6 +2,9 @@ module godbg
 
 go 1.15
 
+//replace github.com/stromland/cobra-prompt => ../../../../Github/cobra-prompt
+replace github.com/stromland/cobra-prompt => github.com/hitzhangjie/cobra-prompt v0.0.0-20201118115017-e51f84e8374c
+
 require (
 	github.com/c-bata/go-prompt v0.2.5
 	github.com/mitchellh/go-homedir v1.1.0
