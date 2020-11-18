@@ -53,8 +53,11 @@ func NewDebugShell() *cobraprompt.CobraPrompt {
 			prompt.OptionDescriptionBGColor(prompt.DarkBlue),
 			prompt.OptionSelectedSuggestionBGColor(prompt.Red),
 			prompt.OptionSelectedDescriptionBGColor(prompt.Red),
-			prompt.OptionMaxSuggestion(5),
-			prompt.OptionCompletionOnDown(),
+			// here, hide prompt dropdown list
+			// TODO do we have a better way to show/hide the prompt dropdown list?
+			prompt.OptionMaxSuggestion(0),
+			//prompt.OptionCompletionOnDown(),
+			//prompt.OptionShowCompletionAtStart(),
 		},
 	}
 }
