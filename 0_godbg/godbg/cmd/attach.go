@@ -51,22 +51,20 @@ var attachCmd = &cobra.Command{
 
 		pid, err := strconv.ParseInt(args[0], 10, 64)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s invalid traceePID\n\n", os.Args[2])
+			fmt.Printf("%s invalid traceePID\n", os.Args[2])
 			os.Exit(1)
 		}
-		traceePID = int(pid)
+		debug.TraceePID = int(pid)
 
 		// check traceePID
 		if !checkPid(int(pid)) {
-			fmt.Fprintf(os.Stderr, "process %d not existed\n\n", pid)
-			os.Exit(1)
+			return fmt.Errorf("process %d not existed\n", pid)
 		}
 
 		// attach
 		err = syscall.PtraceAttach(int(pid))
 		if err != nil {
-			fmt.Printf("process %d attached error: %v\n", pid, err)
-			os.Exit(1)
+			return fmt.Errorf("process %d attached error: %v\n", pid, err)
 		}
 		fmt.Printf("process %d attached succ\n", pid)
 
@@ -77,8 +75,7 @@ var attachCmd = &cobra.Command{
 		)
 		_, err = syscall.Wait4(int(pid), &status, syscall.WSTOPPED, &rusage)
 		if err != nil {
-			fmt.Printf("process %d waited error: %v\n", pid, err)
-			os.Exit(1)
+			return fmt.Errorf("process %d waited error: %v\n", pid, err)
 		}
 		fmt.Printf("process %d stopped: %v\n", pid, status.Stopped())
 		return nil
@@ -87,7 +84,7 @@ var attachCmd = &cobra.Command{
 		debug.NewDebugShell().Run()
 
 		// MUST: call runtime.LockOSThead() first
-		return syscall.PtraceDetach(int(traceePID))
+		return syscall.PtraceDetach(debug.TraceePID)
 	},
 }
 
@@ -104,7 +101,7 @@ func init() {
 func checkPid(pid int) bool {
 	out, err := exec.Command("kill", "-s", "0", strconv.Itoa(pid)).CombinedOutput()
 	if err != nil {
-		panic(err)
+		return false
 	}
 
 	// output error message, means traceePID is invalid

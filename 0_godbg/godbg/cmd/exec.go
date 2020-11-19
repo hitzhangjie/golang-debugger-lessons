@@ -27,8 +27,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var traceePID int
-
 // execCmd represents the exec command
 var execCmd = &cobra.Command{
 	Use:   "exec <prog>",
@@ -56,24 +54,24 @@ var execCmd = &cobra.Command{
 		}
 
 		// wait target process stopped
-		traceePID = progCmd.Process.Pid
+		debug.TraceePID = progCmd.Process.Pid
 
 		var (
 			status syscall.WaitStatus
 			rusage syscall.Rusage
 		)
-		_, err = syscall.Wait4(traceePID, &status, syscall.WALL, &rusage)
+		_, err = syscall.Wait4(debug.TraceePID, &status, syscall.WALL, &rusage)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("process %d stopped: %v\n", traceePID, status.Stopped())
+		fmt.Printf("process %d stopped: %v\n", debug.TraceePID, status.Stopped())
 
 		return nil
 	},
 	PostRunE: func(cmd *cobra.Command, args []string) error {
 		debug.NewDebugShell().Run()
 		// let target process continue
-		return syscall.PtraceCont(traceePID, 0)
+		return syscall.PtraceCont(debug.TraceePID, 0)
 	},
 }
 

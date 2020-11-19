@@ -26,6 +26,8 @@ const (
 	suggestionListSourceFiles = "ListSourceFiles"
 )
 
+var TraceePID int
+
 var debugRootCmd = &cobra.Command{
 	Use:   "",
 	Short: description,
@@ -58,6 +60,7 @@ func NewDebugShell() *cobraprompt.CobraPrompt {
 			// TODO do we have a better way to show/hide the prompt dropdown list?
 			prompt.OptionMaxSuggestion(10),
 			prompt.OptionShowCompletionAtStart(),
+			prompt.OptionCompletionOnDown(),
 		},
 		EnableSilentPrompt: true,
 		EnableShowAtStart:  true,

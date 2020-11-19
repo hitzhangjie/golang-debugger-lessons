@@ -22,8 +22,7 @@ func main() {
 	}
 
 	// 通过pid找到可执行程序路径
-	exeLink := fmt.Sprintf("/proc/%d/exe", pid)
-	exePath, err := os.Readlink(exeLink)
+	exePath, err := GetExecutable(pid)
 	if err != nil {
 		panic(err)
 	}
@@ -49,4 +48,14 @@ func main() {
 		fmt.Printf("%8x %s\n", offset, inst.String())
 		offset += inst.Len
 	}
+}
+
+// GetExecutable 根据pid获取可执行程序路径
+func GetExecutable(pid int) (string, error) {
+	exeLink := fmt.Sprintf("/proc/%d/exe", pid)
+	exePath, err := os.Readlink(exeLink)
+	if err != nil {
+		return "", err
+	}
+	return exePath, nil
 }
