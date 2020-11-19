@@ -16,7 +16,10 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
 	"godbg/cmd/debug"
@@ -29,8 +32,25 @@ var execCmd = &cobra.Command{
 	Use:   "exec <prog>",
 	Short: "调试可执行程序",
 	Long:  `调试可执行程序`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("exec %s\n", strings.Join(args, ""))
+
+		if len(args) != 1 {
+			return errors.New("参数错误")
+		}
+
+		progCmd := exec.Command(args[0])
+		buf, err := progCmd.CombinedOutput()
+
+		fmt.Fprintf(os.Stdout, "tracee pid: %d\n", progCmd.Process.Pid)
+
+		if err != nil {
+			return fmt.Errorf("%s exec error: %v, \n\n%s\n\n", err, string(buf))
+		}
+		fmt.Printf("%s\n", string(buf))
+		return nil
+	},
+	PostRun: func(cmd *cobra.Command, args []string) {
 		debug.NewDebugShell().Run()
 	},
 }
