@@ -50,8 +50,6 @@ var execCmd = &cobra.Command{
 		progCmd.Stderr = os.Stderr
 		progCmd.SysProcAttr = &syscall.SysProcAttr{
 			Ptrace: true,
-			Setpgid: true,
-			Foreground: true,
 		}
 
 		err := progCmd.Start()
@@ -59,30 +57,25 @@ var execCmd = &cobra.Command{
 			return err
 		}
 
-		// attach target process
-		pid = progCmd.Process.Pid
-		err = syscall.PtraceAttach(pid)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("process %d attach succ\n", pid)
-
 		// wait target process stopped
+		pid = progCmd.Process.Pid
+
 		var (
 			status syscall.WaitStatus
 			rusage syscall.Rusage
 		)
-		_, err = syscall.Wait4(int(pid), &status, syscall.WSTOPPED, &rusage)
+		_, err = syscall.Wait4(pid, &status, syscall.WALL, &rusage)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("process %d stoppped\n", pid)
+		fmt.Printf("process %d stopped:%v\n", pid, status.Stopped())
 
 		return nil
 	},
 	PostRunE: func(cmd *cobra.Command, args []string) error {
 		debug.NewDebugShell().Run()
-		return syscall.PtraceDetach(pid)
+		// let target process continue
+		return syscall.PtraceCont(pid, 0)
 	},
 }
 
