@@ -22,9 +22,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
-	"strings"
 	"syscall"
-	"time"
 
 	"godbg/cmd/debug"
 
@@ -33,11 +31,11 @@ import (
 
 // attachCmd represents the attach command
 var attachCmd = &cobra.Command{
-	Use:   "attach <pid>",
+	Use:   "attach <traceePID>",
 	Short: "调试运行中进程",
 	Long:  `调试运行中进程`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("attach %s\n", strings.Join(args, ""))
+		//fmt.Printf("attach %s\n", strings.Join(args, ""))
 
 		// issue: https://github.com/golang/go/issues/7699
 		//
@@ -53,11 +51,12 @@ var attachCmd = &cobra.Command{
 
 		pid, err := strconv.ParseInt(args[0], 10, 64)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s invalid pid\n\n", os.Args[2])
+			fmt.Fprintf(os.Stderr, "%s invalid traceePID\n\n", os.Args[2])
 			os.Exit(1)
 		}
+		traceePID = int(pid)
 
-		// check pid
+		// check traceePID
 		if !checkPid(int(pid)) {
 			fmt.Fprintf(os.Stderr, "process %d not existed\n\n", pid)
 			os.Exit(1)
@@ -66,10 +65,10 @@ var attachCmd = &cobra.Command{
 		// attach
 		err = syscall.PtraceAttach(int(pid))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "process %d attach error: %v\n\n", pid, err)
+			fmt.Printf("process %d attached error: %v\n", pid, err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stdout, "process %d attach succ\n\n", pid)
+		fmt.Printf("process %d attached succ\n", pid)
 
 		// wait
 		var (
@@ -78,46 +77,37 @@ var attachCmd = &cobra.Command{
 		)
 		_, err = syscall.Wait4(int(pid), &status, syscall.WSTOPPED, &rusage)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "process %d wait error: %v\n\n", pid, err)
+			fmt.Printf("process %d waited error: %v\n", pid, err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stdout, "process %d wait succ, status:%v, rusage:%v\n\n", pid, status, rusage)
-
-		// detach
-		fmt.Printf("we're doing some debugging...\n")
-		time.Sleep(time.Second * 10)
-
-		// MUST: call runtime.LockOSThead() first
-		err = syscall.PtraceDetach(int(pid))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "process %d detach error: %v\n\n", pid, err)
-			os.Exit(1)
-		}
-		fmt.Fprintf(os.Stdout, "process %d detach succ\n\n", pid)
+		fmt.Printf("process %d stopped: %v\n", pid, status.Stopped())
 		return nil
 	},
-	PostRun: func(cmd *cobra.Command, args []string) {
+	PostRunE: func(cmd *cobra.Command, args []string) error {
 		debug.NewDebugShell().Run()
+
+		// MUST: call runtime.LockOSThead() first
+		return syscall.PtraceDetach(int(traceePID))
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(attachCmd)
 
-	attachCmd.Flags().Uint32P("pid", "p", 0, "process's pid to attach")
+	attachCmd.Flags().Uint32P("traceePID", "p", 0, "process's traceePID to attach")
 }
 
-// checkPid check whether pid is valid process's id
+// checkPid check whether traceePID is valid process's id
 //
 // On Unix systems, os.FindProcess always succeeds and returns a Process for
-// the given pid, regardless of whether the process exists.
+// the given traceePID, regardless of whether the process exists.
 func checkPid(pid int) bool {
 	out, err := exec.Command("kill", "-s", "0", strconv.Itoa(pid)).CombinedOutput()
 	if err != nil {
 		panic(err)
 	}
 
-	// output error message, means pid is invalid
+	// output error message, means traceePID is invalid
 	if string(out) != "" {
 		return false
 	}

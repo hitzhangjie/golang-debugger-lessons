@@ -20,16 +20,14 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 
 	"godbg/cmd/debug"
 
-	isatty "github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
-var pid int
+var traceePID int
 
 // execCmd represents the exec command
 var execCmd = &cobra.Command{
@@ -37,7 +35,7 @@ var execCmd = &cobra.Command{
 	Short: "调试可执行程序",
 	Long:  `调试可执行程序`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("exec %s\n", strings.Join(args, ""))
+		//fmt.Printf("exec %s\n", strings.Join(args, ""))
 
 		if len(args) != 1 {
 			return errors.New("参数错误")
@@ -58,46 +56,27 @@ var execCmd = &cobra.Command{
 		}
 
 		// wait target process stopped
-		pid = progCmd.Process.Pid
+		traceePID = progCmd.Process.Pid
 
 		var (
 			status syscall.WaitStatus
 			rusage syscall.Rusage
 		)
-		_, err = syscall.Wait4(pid, &status, syscall.WALL, &rusage)
+		_, err = syscall.Wait4(traceePID, &status, syscall.WALL, &rusage)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("process %d stopped:%v\n", pid, status.Stopped())
+		fmt.Printf("process %d stopped: %v\n", traceePID, status.Stopped())
 
 		return nil
 	},
 	PostRunE: func(cmd *cobra.Command, args []string) error {
 		debug.NewDebugShell().Run()
 		// let target process continue
-		return syscall.PtraceCont(pid, 0)
+		return syscall.PtraceCont(traceePID, 0)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(execCmd)
-}
-
-func attachProcessToTTY(process *exec.Cmd, tty string) (*os.File, error) {
-	f, err := os.OpenFile(tty, os.O_RDWR, 0)
-	if err != nil {
-		return nil, err
-	}
-	if !isatty.IsTerminal(f.Fd()) {
-		f.Close()
-		return nil, fmt.Errorf("%s is not a terminal", f.Name())
-	}
-	process.Stdin = f
-	process.Stdout = f
-	process.Stderr = f
-	process.SysProcAttr.Setpgid = false
-	process.SysProcAttr.Setsid = true
-	process.SysProcAttr.Setctty = true
-
-	return f, nil
 }
