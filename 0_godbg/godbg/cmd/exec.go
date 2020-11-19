@@ -21,11 +21,15 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"godbg/cmd/debug"
 
+	isatty "github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
+
+var pid int
 
 // execCmd represents the exec command
 var execCmd = &cobra.Command{
@@ -39,22 +43,68 @@ var execCmd = &cobra.Command{
 			return errors.New("参数错误")
 		}
 
+		// start process but don't wait it finished
 		progCmd := exec.Command(args[0])
-		buf, err := progCmd.CombinedOutput()
-
-		fmt.Fprintf(os.Stdout, "tracee pid: %d\n", progCmd.Process.Pid)
-
-		if err != nil {
-			return fmt.Errorf("%s exec error: %v, \n\n%s\n\n", err, string(buf))
+		progCmd.Stdin = os.Stdin
+		progCmd.Stdout = os.Stdout
+		progCmd.Stderr = os.Stderr
+		progCmd.SysProcAttr = &syscall.SysProcAttr{
+			Ptrace: true,
+			Setpgid: true,
+			Foreground: true,
 		}
-		fmt.Printf("%s\n", string(buf))
+
+		err := progCmd.Start()
+		if err != nil {
+			return err
+		}
+
+		// attach target process
+		pid = progCmd.Process.Pid
+		err = syscall.PtraceAttach(pid)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("process %d attach succ\n", pid)
+
+		// wait target process stopped
+		var (
+			status syscall.WaitStatus
+			rusage syscall.Rusage
+		)
+		_, err = syscall.Wait4(int(pid), &status, syscall.WSTOPPED, &rusage)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("process %d stoppped\n", pid)
+
 		return nil
 	},
-	PostRun: func(cmd *cobra.Command, args []string) {
+	PostRunE: func(cmd *cobra.Command, args []string) error {
 		debug.NewDebugShell().Run()
+		return syscall.PtraceDetach(pid)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(execCmd)
+}
+
+func attachProcessToTTY(process *exec.Cmd, tty string) (*os.File, error) {
+	f, err := os.OpenFile(tty, os.O_RDWR, 0)
+	if err != nil {
+		return nil, err
+	}
+	if !isatty.IsTerminal(f.Fd()) {
+		f.Close()
+		return nil, fmt.Errorf("%s is not a terminal", f.Name())
+	}
+	process.Stdin = f
+	process.Stdout = f
+	process.Stderr = f
+	process.SysProcAttr.Setpgid = false
+	process.SysProcAttr.Setsid = true
+	process.SysProcAttr.Setctty = true
+
+	return f, nil
 }
