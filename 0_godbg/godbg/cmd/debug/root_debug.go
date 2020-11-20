@@ -26,7 +26,10 @@ const (
 	suggestionListSourceFiles = "ListSourceFiles"
 )
 
-var TraceePID int
+var (
+	TraceePID          int
+	breakpointsOrigDat = map[uintptr]byte{}
+)
 
 var debugRootCmd = &cobra.Command{
 	Use:   "",
