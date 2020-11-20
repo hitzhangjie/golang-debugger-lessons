@@ -7,6 +7,8 @@ import (
 	"strings"
 	"syscall"
 
+	"godbg/target"
+
 	"github.com/spf13/cobra"
 )
 
@@ -31,19 +33,24 @@ var breakCmd = &cobra.Command{
 		}
 
 		locStr := args[0]
-		addr, err := strconv.ParseUint(locStr, 0, 64)
+		v, err := strconv.ParseUint(locStr, 0, 64)
 		if err != nil {
 			return fmt.Errorf("invalid locspec: %v", err)
 		}
+		addr := uintptr(v)
 
 		orig := [1]byte{}
-		n, err := syscall.PtracePeekData(TraceePID, uintptr(addr), orig[:])
+		n, err := syscall.PtracePeekData(TraceePID, addr, orig[:])
 		if err != nil || n != 1 {
 			return fmt.Errorf("peek text, %d bytes, error: %v", n, err)
 		}
-		breakpointsOrigDat[uintptr(addr)] = orig[0]
+		breakpoint, err := target.NewBreakpoint(addr, orig[0], "")
+		if err != nil {
+			return fmt.Errorf("add breakpoint error: %v", err)
+		}
+		breakpoints[addr] = &breakpoint
 
-		n, err = syscall.PtracePokeText(TraceePID, uintptr(addr), []byte{0xCC})
+		n, err = syscall.PtracePokeText(TraceePID, addr, []byte{0xCC})
 		if err != nil || n != 1 {
 			return fmt.Errorf("poke text, %d bytes, error: %v", n, err)
 		}

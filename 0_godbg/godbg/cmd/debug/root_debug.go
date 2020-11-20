@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 
+	"godbg/target"
+
 	"github.com/c-bata/go-prompt"
 	"github.com/spf13/cobra"
 	"github.com/stromland/cobra-prompt"
@@ -27,8 +29,8 @@ const (
 )
 
 var (
-	TraceePID          int
-	breakpointsOrigDat = map[uintptr]byte{}
+	TraceePID   int
+	breakpoints = map[uintptr]*target.Breakpoint{}
 )
 
 var debugRootCmd = &cobra.Command{
