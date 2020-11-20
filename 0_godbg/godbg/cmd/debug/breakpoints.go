@@ -10,10 +10,10 @@ import (
 )
 
 var breaksCmd = &cobra.Command{
-	Use:     "breakpoints",
+	Use:     "breaks",
 	Short:   "列出所有断点",
 	Long:    "列出所有断点",
-	Aliases: []string{"bs", "breaks"},
+	Aliases: []string{"bs", "breakpoints"},
 	Annotations: map[string]string{
 		cmdGroupKey: cmdGroupBreakpoints,
 	},
