@@ -2,6 +2,9 @@ package debug
 
 import (
 	"fmt"
+	"syscall"
+
+	"godbg/target"
 
 	"github.com/spf13/cobra"
 )
@@ -13,8 +16,19 @@ var clearallCmd = &cobra.Command{
 	Annotations: map[string]string{
 		cmdGroupKey: cmdGroupBreakpoints,
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("clearall breakpoints")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		fmt.Println("clearall")
+
+		for _, brk := range breakpoints {
+			n, err := syscall.PtracePokeData(TraceePID, brk.Addr, []byte{brk.Orig})
+			if err != nil || n != 1 {
+				return fmt.Errorf("清空断点失败: %v", err)
+			}
+		}
+
+		breakpoints = map[uintptr]*target.Breakpoint{}
+		fmt.Println("清空断点成功")
+		return nil
 	},
 }
 

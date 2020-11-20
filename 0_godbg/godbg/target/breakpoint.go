@@ -5,12 +5,12 @@ import (
 )
 
 var (
-	seqNo atomic.Int64
+	seqNo = atomic.NewUint64(0)
 )
 
 // Breakpoint 断点
 type Breakpoint struct {
-	ID       int64
+	ID       uint64
 	Addr     uintptr
 	Orig     byte
 	Location string
@@ -36,9 +36,9 @@ func (b Breakpoints) Swap(i, j int) {
 func NewBreakpoint(addr uintptr, orig byte, location string) (Breakpoint, error) {
 	b := Breakpoint{
 		ID:       seqNo.Add(1),
-		Addr:     0,
-		Orig:     0,
-		Location: "",
+		Addr:     addr,
+		Orig:     orig,
+		Location: location,
 	}
 	return b, nil
 }
