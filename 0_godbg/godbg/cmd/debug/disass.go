@@ -50,7 +50,7 @@ var disassCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("x86asm decode error: %v", err)
 			}
-			fmt.Printf("%8x %s\n", offset, inst.String())
+			fmt.Printf("%#x %s\n", regs.PC()+uint64(offset), inst.String())
 			offset += inst.Len
 		}
 	},
