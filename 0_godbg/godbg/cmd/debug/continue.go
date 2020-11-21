@@ -13,7 +13,6 @@ var stepCmd = &cobra.Command{
 	Annotations: map[string]string{
 		cmdGroupKey: cmdGroupCtrlFlow,
 	},
-	Aliases: []string{"s"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("step")
 

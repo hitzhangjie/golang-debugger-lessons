@@ -15,6 +15,7 @@ var disassCmd = &cobra.Command{
 	Annotations: map[string]string{
 		cmdGroupKey: cmdGroupSource,
 	},
+	Aliases: []string{"dis", "disassemble"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		max, _ := cmd.Flags().GetUint("n")
