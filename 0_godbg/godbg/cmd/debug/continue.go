@@ -7,14 +7,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var stepCmd = &cobra.Command{
-	Use:   "step",
-	Short: "执行一条指令",
+var continueCmd = &cobra.Command{
+	Use:   "continue",
+	Short: "运行到下个断点",
 	Annotations: map[string]string{
 		cmdGroupKey: cmdGroupCtrlFlow,
 	},
+	Aliases: []string{"c"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("step")
+		fmt.Println("continue")
 
 		// 读取PC值
 		regs := syscall.PtraceRegs{}
@@ -40,7 +41,7 @@ var stepCmd = &cobra.Command{
 			}
 		}
 
-		err = syscall.PtraceSingleStep(TraceePID)
+		err = syscall.PtraceCont(TraceePID, 0)
 		if err != nil {
 			return fmt.Errorf("single step error: %v", err)
 		}
@@ -59,11 +60,11 @@ var stepCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("get regs error: %v", err)
 		}
-		fmt.Printf("single step ok, current PC: %#x\n", regs.PC())
+		fmt.Printf("continue ok, current PC: %#x\n", regs.PC())
 		return nil
 	},
 }
 
 func init() {
-	debugRootCmd.AddCommand(stepCmd)
+	debugRootCmd.AddCommand(continueCmd)
 }
