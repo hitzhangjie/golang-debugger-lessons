@@ -40,7 +40,7 @@ var breakCmd = &cobra.Command{
 		addr := uintptr(v)
 
 		orig := [1]byte{}
-		n, err := syscall.PtracePeekData(TraceePID, addr, orig[:])
+		n, err := syscall.PtracePeekText(TraceePID, addr, orig[:])
 		if err != nil || n != 1 {
 			return fmt.Errorf("peek text, %d bytes, error: %v", n, err)
 		}
