@@ -45,7 +45,9 @@ var execCmd = &cobra.Command{
 		progCmd.Stdout = os.Stdout
 		progCmd.Stderr = os.Stderr
 		progCmd.SysProcAttr = &syscall.SysProcAttr{
-			Ptrace: true,
+			Ptrace:     true,
+			Setpgid:    true,
+			Foreground: false,
 		}
 
 		err := progCmd.Start()
