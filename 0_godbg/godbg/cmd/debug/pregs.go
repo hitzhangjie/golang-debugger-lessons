@@ -12,7 +12,7 @@ import (
 
 var pregsCmd = &cobra.Command{
 	Use:   "pregs",
-	Short: "打印内存数据",
+	Short: "打印寄存器数据",
 	Annotations: map[string]string{
 		cmdGroupKey: cmdGroupInfo,
 	},
