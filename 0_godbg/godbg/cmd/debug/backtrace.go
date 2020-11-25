@@ -7,10 +7,11 @@ import (
 )
 
 var backtraceCmd = &cobra.Command{
-	Use:   "bt",
-	Short: "打印调用栈信息",
+	Use:     "bt",
+	Short:   "打印调用栈信息",
+	Aliases: []string{"backtrace"},
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupInfo,
+		cmdGroupAnnotation: cmdGroupInfo,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		os.Exit(0)

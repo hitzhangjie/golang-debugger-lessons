@@ -11,12 +11,11 @@ var continueCmd = &cobra.Command{
 	Use:   "continue",
 	Short: "运行到下个断点",
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupCtrlFlow,
+		cmdGroupAnnotation: cmdGroupCtrlFlow,
 	},
 	Aliases: []string{"c"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("continue")
-
+		//fmt.Println("continue")
 		// 读取PC值
 		regs := syscall.PtraceRegs{}
 		err := syscall.PtraceGetRegs(TraceePID, &regs)

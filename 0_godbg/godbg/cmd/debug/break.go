@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"syscall"
 
 	"godbg/target"
@@ -23,11 +22,10 @@ var breakCmd = &cobra.Command{
 - [文件名:]函数名`,
 	Aliases: []string{"b", "breakpoint"},
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupBreakpoints,
+		cmdGroupAnnotation: cmdGroupBreakpoints,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("break %s\n", strings.Join(args, " "))
-
+		//fmt.Printf("break %s\n", strings.Join(args, " "))
 		if len(args) != 1 {
 			return errors.New("参数错误")
 		}

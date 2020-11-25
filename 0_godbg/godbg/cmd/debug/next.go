@@ -10,7 +10,7 @@ var nextCmd = &cobra.Command{
 	Use:   "next",
 	Short: "执行一条语句",
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupCtrlFlow,
+		cmdGroupAnnotation: cmdGroupCtrlFlow,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("next")

@@ -7,10 +7,11 @@ import (
 )
 
 var printCmd = &cobra.Command{
-	Use:   "print <var|reg>",
-	Short: "打印变量或寄存器值",
+	Use:     "print <var|reg>",
+	Short:   "打印变量或寄存器值",
+	Aliases: []string{"p"},
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupInfo,
+		cmdGroupAnnotation: cmdGroupInfo,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		os.Exit(0)

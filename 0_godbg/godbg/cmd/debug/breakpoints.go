@@ -15,10 +15,9 @@ var breaksCmd = &cobra.Command{
 	Long:    "列出所有断点",
 	Aliases: []string{"bs", "breakpoints"},
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupBreakpoints,
+		cmdGroupAnnotation: cmdGroupBreakpoints,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		bs := target.Breakpoints{}
 		for _, b := range breakpoints {
 			bs = append(bs, *b)

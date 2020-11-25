@@ -13,11 +13,10 @@ var disassCmd = &cobra.Command{
 	Use:   "disass <locspec>",
 	Short: "反汇编机器指令",
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupSource,
+		cmdGroupAnnotation: cmdGroupSource,
 	},
 	Aliases: []string{"dis", "disassemble"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		max, _ := cmd.Flags().GetUint("n")
 		syntax, _ := cmd.Flags().GetString("syntax")
 

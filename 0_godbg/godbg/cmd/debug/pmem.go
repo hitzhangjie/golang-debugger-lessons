@@ -13,13 +13,12 @@ import (
 )
 
 var pmemCmd = &cobra.Command{
-	Use:   "pmem ",
+	Use:   "pmem [flags] <address>",
 	Short: "打印内存数据",
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupInfo,
+		cmdGroupAnnotation: cmdGroupInfo,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		count, _ := cmd.Flags().GetUint("count")
 		format, _ := cmd.Flags().GetString("fmt")
 		size, _ := cmd.Flags().GetUint("size")

@@ -30,8 +30,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "godbg",
 	Short: "godbg是一个面向go语言的符号级调试器",
-	Long: `
-godbg是一个go程序符号级调试器，它是以学习为目的驱动开发的调试器，
+	Long: `godbg是一个go程序符号级调试器，它是以学习为目的驱动开发的调试器，
 希望我们的工作可以为更多人打开一个认识计算机世界的大门，不谢！`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
@@ -57,7 +56,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.godbg.yaml)")
+	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.godbg.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

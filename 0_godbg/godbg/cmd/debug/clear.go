@@ -3,7 +3,6 @@ package debug
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"syscall"
 
 	"godbg/target"
@@ -12,15 +11,14 @@ import (
 )
 
 var clearCmd = &cobra.Command{
-	Use:   "clear <n>",
+	Use:   "clear <breakpoint no.>",
 	Short: "清除指定编号的断点",
 	Long:  `清除指定编号的断点`,
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupBreakpoints,
+		cmdGroupAnnotation: cmdGroupBreakpoints,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("clear %s\n", strings.Join(args, " "))
-
+		//fmt.Printf("clear %s\n", strings.Join(args, " "))
 		id, err := cmd.Flags().GetUint64("n")
 		if err != nil {
 			return err

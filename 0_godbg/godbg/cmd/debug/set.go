@@ -10,7 +10,7 @@ var setCmd = &cobra.Command{
 	Use:   "set <var|reg>=<value>",
 	Short: "设置变量或寄存器值",
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupInfo,
+		cmdGroupAnnotation: cmdGroupInfo,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		os.Exit(0)

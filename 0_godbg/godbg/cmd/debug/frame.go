@@ -7,10 +7,10 @@ import (
 )
 
 var frameCmd = &cobra.Command{
-	Use:   "frame",
+	Use:   "frame <frame no.>",
 	Short: "选择调用栈中栈帧",
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupInfo,
+		cmdGroupAnnotation: cmdGroupInfo,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		os.Exit(0)

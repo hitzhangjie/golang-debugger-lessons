@@ -10,15 +10,14 @@ import (
 )
 
 var clearallCmd = &cobra.Command{
-	Use:   "clearall <n>",
+	Use:   "clearall",
 	Short: "清除所有的断点",
 	Long:  `清除所有的断点`,
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupBreakpoints,
+		cmdGroupAnnotation: cmdGroupBreakpoints,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("clearall")
-
+		//fmt.Println("clearall")
 		for _, brk := range breakpoints {
 			n, err := syscall.PtracePokeData(TraceePID, brk.Addr, []byte{brk.Orig})
 			if err != nil || n != 1 {

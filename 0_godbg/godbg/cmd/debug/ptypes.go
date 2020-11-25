@@ -6,11 +6,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var ptypesCmd = &cobra.Command{
-	Use:   "ptypes <variable>",
-	Short: "打印变量类型信息",
+var ptypeCmd = &cobra.Command{
+	Use:     "ptype <variable|type>",
+	Short:   "打印变量类型信息",
+	Aliases: []string{"pt"},
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupInfo,
+		cmdGroupAnnotation: cmdGroupInfo,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		os.Exit(0)
@@ -18,5 +19,5 @@ var ptypesCmd = &cobra.Command{
 }
 
 func init() {
-	debugRootCmd.AddCommand(ptypesCmd)
+	debugRootCmd.AddCommand(ptypeCmd)
 }

@@ -8,15 +8,14 @@ import (
 )
 
 var stepCmd = &cobra.Command{
-	Use:   "step",
-	Short: "执行一条指令",
-	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupCtrlFlow,
-	},
+	Use:     "step",
+	Short:   "执行一条指令",
 	Aliases: []string{"s"},
+	Annotations: map[string]string{
+		cmdGroupAnnotation: cmdGroupCtrlFlow,
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("step")
-
+		//fmt.Println("step")
 		// 读取PC值
 		regs := syscall.PtraceRegs{}
 		err := syscall.PtraceGetRegs(TraceePID, &regs)

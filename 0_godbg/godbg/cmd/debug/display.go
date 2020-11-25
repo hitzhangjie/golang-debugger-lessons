@@ -10,7 +10,7 @@ var displayCmd = &cobra.Command{
 	Use:   "display <var|reg>",
 	Short: "始终显示变量或寄存器值",
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupInfo,
+		cmdGroupAnnotation: cmdGroupInfo,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		os.Exit(0)

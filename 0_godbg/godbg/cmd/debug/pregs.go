@@ -14,7 +14,7 @@ var pregsCmd = &cobra.Command{
 	Use:   "pregs",
 	Short: "打印寄存器数据",
 	Annotations: map[string]string{
-		cmdGroupKey: cmdGroupInfo,
+		cmdGroupAnnotation: cmdGroupInfo,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		regsOut := syscall.PtraceRegs{}
