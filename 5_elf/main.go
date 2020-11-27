@@ -77,4 +77,14 @@ func main() {
 	f, l, fn := table.PCToLine(pc)
 	fmt.Println(f, l, fn.Name)
 
+	// print call stack
+	printStackTrace(table, fn.Entry, 3)
+}
+
+func printStackTrace(pclntab *gosym.Table, pc uint64, depth int) {
+	for i := 0; i < depth; i++ {
+		file, ln, fn := pclntab.PCToLine(pc)
+		fmt.Printf("func: %s, pos:%s:%d\n", fn.Name, file, ln)
+		pc = fn.Entry - 1
+	}
 }
