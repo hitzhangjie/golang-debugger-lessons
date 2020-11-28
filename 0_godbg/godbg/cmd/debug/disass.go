@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/arch/x86/x86asm"
@@ -47,6 +48,8 @@ var disassCmd = &cobra.Command{
 		}
 		//fmt.Printf("size of text: %d\n", n)
 
+		tw := tabwriter.NewWriter(os.Stdout, 0, 4, 8, ' ', 0)
+
 		// 反汇编这里的指令数据
 		offset := 0
 		count := 0
@@ -61,10 +64,12 @@ var disassCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("x86asm syntax error: %v", err)
 			}
-			fmt.Printf("%#x %s\n", regs.PC()+uint64(offset), asm)
-			offset += inst.Len
+			end := offset + inst.Len
+			fmt.Fprintf(tw, "%#x:\t% x\t%s\n", regs.PC()+uint64(offset), dat[offset:end], asm)
+			offset = end
 			count++
 		}
+		tw.Flush()
 		return nil
 	},
 }
