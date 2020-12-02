@@ -1,12 +1,13 @@
 package main
 
 import (
+	"debug/dwarf"
 	"debug/elf"
 	"debug/gosym"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
-	"text/tabwriter"
 
 	"github.com/davecgh/go-spew/spew"
 	"golang.org/x/arch/x86/x86asm"
@@ -19,45 +20,104 @@ func main() {
 	}
 	prog := os.Args[1]
 
+	// open elf
 	file, err := elf.Open(prog)
 	if err != nil {
 		panic(err)
 	}
 	//spew.Dump(file)
 
-	tw := tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
-	fmt.Fprintf(tw, "No.\tType\tFlags\tVAddr\tMemSize\n")
-	for idx, p := range file.Progs {
-		fmt.Fprintf(tw, "%d\t%v\t%v\t%#x\t%d\n", idx, p.Type, p.Flags, p.Vaddr, p.Memsz)
-	}
-	tw.Flush()
-	println()
+	// prog headers
+	//tw := tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
+	//fmt.Fprintf(tw, "No.\tType\tFlags\tVAddr\tMemSize\n")
+	//for idx, p := range file.Progs {
+	//	fmt.Fprintf(tw, "%d\t%v\t%v\t%#x\t%d\n", idx, p.Type, p.Flags, p.Vaddr, p.Memsz)
+	//}
+	//tw.Flush()
+	//println()
 
-	text := file.Progs[2]
-	buf := make([]byte, text.Filesz, text.Filesz)
-	n, err := text.ReadAt(buf, int64(64+56))
+	// section headers
+	//tw = tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
+	//heading := "No.\tName\tType\tFlags\tAddr\tOffset\tSize\tLink\tInfo\tAddrAlign\tEntSize\tFileSize\n"
+	//fmt.Fprintf(tw, heading)
+	//for idx, s := range file.Sections {
+	//	fmt.Fprintf(tw, "%d\t%s\t%s\t%s\t%#x\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+	//		idx, s.Name, s.Type.String(), s.Flags.String(), s.Addr, s.Offset,
+	//		s.Size, s.Link, s.Info, s.Addralign, s.Entsize, s.FileSize)
+	//}
+	//tw.Flush()
+	//println()
+
+	// .text section
+	//dat, err := file.Section(".text").Data()
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Printf("% x\n", dat[:32])
+	//
+	//offset := 0
+	//for i := 0; i < 10; i++ {
+	//	inst, err := x86asm.Decode(dat[offset:], 64)
+	//	if err != nil {
+	//		break
+	//	}
+	//	fmt.Println(x86asm.GNUSyntax(inst, 0, nil))
+	//	offset += inst.Len
+	//}
+
+	dataSection := file.Section(".data")
+	dat, err := dataSection.Data()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%x\n", buf[:64])
-	fmt.Printf("i have read some data: %d bytes\n", n)
+	_ = dat
+	//fmt.Printf("% x\n", dat[:32])
 
-	i := 0
-	count := 0
+	dw, err := file.DWARF()
+	if err != nil {
+		panic(err)
+	}
+
+	rd := dw.Reader()
+
+	// next compilation unit
 	for {
-		if count > 10 {
+		entry, err := rd.Next()
+		if err == io.EOF {
+			fmt.Println(err)
 			break
 		}
-		inst, err := x86asm.Decode(buf[i:], 64)
-		if err != nil {
-			panic(err)
+		if entry == nil {
+			break
 		}
-		asm := x86asm.GoSyntax(inst, uint64(inst.PCRel), nil)
-		fmt.Printf("%#x %-16x %s\n", i, buf[i:i+inst.Len], asm)
-		i += inst.Len
-		count++
+
+		if entry.Tag == dwarf.TagCompileUnit {
+			fmt.Println("CompilationUnit:", entry.Field)
+		}
+
+		if entry.Tag == dwarf.TagSubprogram {
+			// 读取.debug_line关联的行号表信息
+			lrd, err := dw.LineReader(entry)
+			if err != nil {
+				fmt.Println(err)
+				break
+			}
+			if lrd == nil {
+				continue
+			}
+			for {
+				lentry := dwarf.LineEntry{}
+				err = lrd.Next(&lentry)
+				if err == io.EOF {
+					break
+				}
+				fmt.Printf("lineTable: %s:%d\n", lentry.File.Name, lentry.Line)
+			}
+		}
+
+		fmt.Println(entry)
 	}
-	fmt.Println()
+
 }
 
 func main2() {
