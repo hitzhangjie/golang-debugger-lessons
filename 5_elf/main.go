@@ -1,11 +1,9 @@
 package main
 
 import (
-	"debug/dwarf"
 	"debug/elf"
 	"debug/gosym"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -65,58 +63,84 @@ func main() {
 	//	offset += inst.Len
 	//}
 
-	dataSection := file.Section(".data")
-	dat, err := dataSection.Data()
-	if err != nil {
-		panic(err)
-	}
-	_ = dat
+	//dataSection := file.Section(".data")
+	//dat, err := dataSection.Data()
+	//if err != nil {
+	//	panic(err)
+	//}
+	//_ = dat
 	//fmt.Printf("% x\n", dat[:32])
 
-	dw, err := file.DWARF()
+	gosymtab, _ := file.Section(".gosymtab").Data()
+	gopclntab, _ := file.Section(".gopclntab").Data()
+
+	pclntab := gosym.NewLineTable(gopclntab, file.Section(".text").Addr)
+	table, _ := gosym.NewTable(gosymtab, pclntab)
+
+	pc, fn, err := table.LineToPC("/root/debugger101/testdata/loop2.go", 3)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+	} else {
+		fmt.Printf("pc => %#x\tfn => %s\n", pc, fn.Name)
 	}
+	pc, fn, _ = table.LineToPC("/root/debugger101/testdata/loop2.go", 9)
+	fmt.Printf("pc => %#x\tfn => %s\n", pc, fn.Name)
+	pc, fn, _ = table.LineToPC("/root/debugger101/testdata/loop2.go", 11)
+	fmt.Printf("pc => %#x\tfn => %s\n", pc, fn.Name)
+	pc, fn, _ = table.LineToPC("/root/debugger101/testdata/loop2.go", 17)
+	fmt.Printf("pc => %#x\tfn => %s\n", pc, fn.Name)
 
-	rd := dw.Reader()
+	f, l, fn := table.PCToLine(0x4b86cf)
+	fmt.Printf("pc => %#x\tfn => %s\tpos => %s:%d\n", 0x4b86cf, fn.Name, f, l)
+	println()
 
-	// next compilation unit
-	for {
-		entry, err := rd.Next()
-		if err == io.EOF {
-			fmt.Println(err)
-			break
-		}
-		if entry == nil {
-			break
-		}
+	printStackTrace(table, 0x4b86cf, 20)
 
-		if entry.Tag == dwarf.TagCompileUnit {
-			fmt.Println("CompilationUnit:", entry.Field)
-		}
-
-		if entry.Tag == dwarf.TagSubprogram {
-			// 读取.debug_line关联的行号表信息
-			lrd, err := dw.LineReader(entry)
-			if err != nil {
-				fmt.Println(err)
-				break
-			}
-			if lrd == nil {
-				continue
-			}
-			for {
-				lentry := dwarf.LineEntry{}
-				err = lrd.Next(&lentry)
-				if err == io.EOF {
-					break
-				}
-				fmt.Printf("lineTable: %s:%d\n", lentry.File.Name, lentry.Line)
-			}
-		}
-
-		fmt.Println(entry)
-	}
+	// dwarf调试信息遍历
+	//dw, err := file.DWARF()
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//rd := dw.Reader()
+	//
+	//// next compilation unit
+	//for {
+	//	entry, err := rd.Next()
+	//	if err == io.EOF {
+	//		fmt.Println(err)
+	//		break
+	//	}
+	//	if entry == nil {
+	//		break
+	//	}
+	//
+	//	if entry.Tag == dwarf.TagCompileUnit {
+	//		fmt.Println("CompilationUnit:", entry.Field)
+	//	}
+	//
+	//	if entry.Tag == dwarf.TagSubprogram {
+	//		// 读取.debug_line关联的行号表信息
+	//		lrd, err := dw.LineReader(entry)
+	//		if err != nil {
+	//			fmt.Println(err)
+	//			break
+	//		}
+	//		if lrd == nil {
+	//			continue
+	//		}
+	//		for {
+	//			lentry := dwarf.LineEntry{}
+	//			err = lrd.Next(&lentry)
+	//			if err == io.EOF {
+	//				break
+	//			}
+	//			fmt.Printf("lineTable: %s:%d\n", lentry.File.Name, lentry.Line)
+	//		}
+	//	}
+	//
+	//	fmt.Println(entry)
+	//}
 
 }
 
@@ -191,10 +215,22 @@ func main2() {
 	printStackTrace(table, fn.Entry, 3)
 }
 
+var lastFn string
+
 func printStackTrace(pclntab *gosym.Table, pc uint64, depth int) {
 	for i := 0; i < depth; i++ {
-		file, ln, fn := pclntab.PCToLine(pc)
-		fmt.Printf("func: %s, pos:%s:%d\n", fn.Name, file, ln)
-		pc = fn.Entry - 1
+		for {
+			file, ln, fn := pclntab.PCToLine(pc)
+			_ = file
+			_ = ln
+			//fmt.Printf("func: %s, pos:%s:%d\n", fn.Name, file, ln)
+			if fn.Name != lastFn {
+				lastFn = fn.Name
+				fmt.Printf("%s pc:%#x\n", fn.Name, pc)
+				pc = fn.Entry - 1
+				break
+			}
+			pc--
+		}
 	}
 }
