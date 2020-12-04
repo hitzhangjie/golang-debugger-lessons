@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/davecgh/go-spew/spew"
@@ -19,6 +20,12 @@ func main() {
 	}
 	prog := os.Args[1]
 
+	//-----------------------------------------------------------------------
+	// elf file
+
+	fmt.Println("processing elf binary:", prog)
+	println()
+
 	// open elf
 	file, err := elf.Open(prog)
 	if err != nil {
@@ -26,7 +33,12 @@ func main() {
 	}
 	//spew.Dump(file)
 
+	//-----------------------------------------------------------------------
 	// prog headers
+
+	fmt.Println("dumping the elf.Progs")
+	fmt.Println(strings.Repeat("-", 120))
+
 	tw := tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
 	fmt.Fprintf(tw, "No.\tType\tFlags\tVAddr\tMemSize\n")
 	for idx, p := range file.Progs {
@@ -35,7 +47,12 @@ func main() {
 	tw.Flush()
 	println()
 
+	//-----------------------------------------------------------------------
 	// section headers
+
+	fmt.Println("dumping the elf.Sections")
+	fmt.Println(strings.Repeat("-", 120))
+
 	tw = tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
 	heading := "No.\tName\tType\tFlags\tAddr\tOffset\tSize\tLink\tInfo\tAddrAlign\tEntSize\tFileSize\n"
 	fmt.Fprintf(tw, heading)
@@ -46,6 +63,12 @@ func main() {
 	}
 	tw.Flush()
 	println()
+
+	//-----------------------------------------------------------------------
+	// using sections
+
+	fmt.Println("using .text section")
+	fmt.Println(strings.Repeat("-", 120))
 
 	// .text section
 	dat, err := file.Section(".text").Data()
@@ -63,6 +86,10 @@ func main() {
 		fmt.Println(x86asm.GNUSyntax(inst, 0, nil))
 		offset += inst.Len
 	}
+	println()
+
+	fmt.Println("using .data section")
+	fmt.Println(strings.Repeat("-", 120))
 
 	dataSection := file.Section(".data")
 	dat, err = dataSection.Data()
@@ -71,29 +98,6 @@ func main() {
 	}
 	_ = dat
 	fmt.Printf("% x\n", dat[:32])
-
-	gosymtab, _ := file.Section(".gosymtab").Data()
-	gopclntab, _ := file.Section(".gopclntab").Data()
-
-	pclntab := gosym.NewLineTable(gopclntab, file.Section(".text").Addr)
-	table, _ := gosym.NewTable(gosymtab, pclntab)
-
-	pc, fn, err := table.LineToPC("/root/debugger101/testdata/loop2.go", 3)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("pc => %#x\tfn => %s\n", pc, fn.Name)
-	}
-	pc, fn, _ = table.LineToPC("/root/debugger101/testdata/loop2.go", 9)
-	fmt.Printf("pc => %#x\tfn => %s\n", pc, fn.Name)
-	pc, fn, _ = table.LineToPC("/root/debugger101/testdata/loop2.go", 11)
-	fmt.Printf("pc => %#x\tfn => %s\n", pc, fn.Name)
-	pc, fn, _ = table.LineToPC("/root/debugger101/testdata/loop2.go", 17)
-	fmt.Printf("pc => %#x\tfn => %s\n", pc, fn.Name)
-
-	f, l, fn := table.PCToLine(0x4b86cf)
-	fmt.Printf("pc => %#x\tfn => %s\tpos => %s:%d\n", 0x4b86cf, fn.Name, f, l)
-	println()
 }
 
 func main2() {
