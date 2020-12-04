@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"text/tabwriter"
 
 	"github.com/davecgh/go-spew/spew"
 	"golang.org/x/arch/x86/x86asm"
@@ -27,50 +26,50 @@ func main() {
 	//spew.Dump(file)
 
 	// prog headers
-	tw := tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
-	fmt.Fprintf(tw, "No.\tType\tFlags\tVAddr\tMemSize\n")
-	for idx, p := range file.Progs {
-		fmt.Fprintf(tw, "%d\t%v\t%v\t%#x\t%d\n", idx, p.Type, p.Flags, p.Vaddr, p.Memsz)
-	}
-	tw.Flush()
-	println()
+	//tw := tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
+	//fmt.Fprintf(tw, "No.\tType\tFlags\tVAddr\tMemSize\n")
+	//for idx, p := range file.Progs {
+	//	fmt.Fprintf(tw, "%d\t%v\t%v\t%#x\t%d\n", idx, p.Type, p.Flags, p.Vaddr, p.Memsz)
+	//}
+	//tw.Flush()
+	//println()
 
 	// section headers
-	tw = tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
-	heading := "No.\tName\tType\tFlags\tAddr\tOffset\tSize\tLink\tInfo\tAddrAlign\tEntSize\tFileSize\n"
-	fmt.Fprintf(tw, heading)
-	for idx, s := range file.Sections {
-		fmt.Fprintf(tw, "%d\t%s\t%s\t%s\t%#x\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
-			idx, s.Name, s.Type.String(), s.Flags.String(), s.Addr, s.Offset,
-			s.Size, s.Link, s.Info, s.Addralign, s.Entsize, s.FileSize)
-	}
-	tw.Flush()
-	println()
+	//tw = tabwriter.NewWriter(os.Stdout, 0, 4, 3, ' ', 0)
+	//heading := "No.\tName\tType\tFlags\tAddr\tOffset\tSize\tLink\tInfo\tAddrAlign\tEntSize\tFileSize\n"
+	//fmt.Fprintf(tw, heading)
+	//for idx, s := range file.Sections {
+	//	fmt.Fprintf(tw, "%d\t%s\t%s\t%s\t%#x\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+	//		idx, s.Name, s.Type.String(), s.Flags.String(), s.Addr, s.Offset,
+	//		s.Size, s.Link, s.Info, s.Addralign, s.Entsize, s.FileSize)
+	//}
+	//tw.Flush()
+	//println()
 
 	// .text section
-	dat, err := file.Section(".text").Data()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("% x\n", dat[:32])
+	//dat, err := file.Section(".text").Data()
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Printf("% x\n", dat[:32])
+	//
+	//offset := 0
+	//for i := 0; i < 10; i++ {
+	//	inst, err := x86asm.Decode(dat[offset:], 64)
+	//	if err != nil {
+	//		break
+	//	}
+	//	fmt.Println(x86asm.GNUSyntax(inst, 0, nil))
+	//	offset += inst.Len
+	//}
 
-	offset := 0
-	for i := 0; i < 10; i++ {
-		inst, err := x86asm.Decode(dat[offset:], 64)
-		if err != nil {
-			break
-		}
-		fmt.Println(x86asm.GNUSyntax(inst, 0, nil))
-		offset += inst.Len
-	}
-
-	dataSection := file.Section(".data")
-	dat, err = dataSection.Data()
-	if err != nil {
-		panic(err)
-	}
-	_ = dat
-	fmt.Printf("% x\n", dat[:32])
+	//dataSection := file.Section(".data")
+	//dat, err := dataSection.Data()
+	//if err != nil {
+	//	panic(err)
+	//}
+	//_ = dat
+	//fmt.Printf("% x\n", dat[:32])
 
 	gosymtab, _ := file.Section(".gosymtab").Data()
 	gopclntab, _ := file.Section(".gopclntab").Data()
@@ -94,6 +93,8 @@ func main() {
 	f, l, fn := table.PCToLine(0x4b86cf)
 	fmt.Printf("pc => %#x\tfn => %s\tpos => %s:%d\n", 0x4b86cf, fn.Name, f, l)
 	println()
+
+	printStackTrace(table, 0x4b86cf, 20)
 
 	// dwarf调试信息遍历
 	//dw, err := file.DWARF()
@@ -209,4 +210,27 @@ func main2() {
 
 	f, l, fn := table.PCToLine(pc)
 	fmt.Println(f, l, fn.Name)
+
+	// print call stack
+	printStackTrace(table, fn.Entry, 3)
+}
+
+var lastFn string
+
+func printStackTrace(pclntab *gosym.Table, pc uint64, depth int) {
+	for i := 0; i < depth; i++ {
+		for {
+			file, ln, fn := pclntab.PCToLine(pc)
+			_ = file
+			_ = ln
+			//fmt.Printf("func: %s, pos:%s:%d\n", fn.Name, file, ln)
+			if fn.Name != lastFn {
+				lastFn = fn.Name
+				fmt.Printf("%s pc:%#x\n", fn.Name, pc)
+				pc = fn.Entry - 1
+				break
+			}
+			pc--
+		}
+	}
 }
