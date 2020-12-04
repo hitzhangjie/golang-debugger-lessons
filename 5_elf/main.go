@@ -94,53 +94,6 @@ func main() {
 	f, l, fn := table.PCToLine(0x4b86cf)
 	fmt.Printf("pc => %#x\tfn => %s\tpos => %s:%d\n", 0x4b86cf, fn.Name, f, l)
 	println()
-
-	// dwarf调试信息遍历
-	//dw, err := file.DWARF()
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//rd := dw.Reader()
-	//
-	//// next compilation unit
-	//for {
-	//	entry, err := rd.Next()
-	//	if err == io.EOF {
-	//		fmt.Println(err)
-	//		break
-	//	}
-	//	if entry == nil {
-	//		break
-	//	}
-	//
-	//	if entry.Tag == dwarf.TagCompileUnit {
-	//		fmt.Println("CompilationUnit:", entry.Field)
-	//	}
-	//
-	//	if entry.Tag == dwarf.TagSubprogram {
-	//		// 读取.debug_line关联的行号表信息
-	//		lrd, err := dw.LineReader(entry)
-	//		if err != nil {
-	//			fmt.Println(err)
-	//			break
-	//		}
-	//		if lrd == nil {
-	//			continue
-	//		}
-	//		for {
-	//			lentry := dwarf.LineEntry{}
-	//			err = lrd.Next(&lentry)
-	//			if err == io.EOF {
-	//				break
-	//			}
-	//			fmt.Printf("lineTable: %s:%d\n", lentry.File.Name, lentry.Line)
-	//		}
-	//	}
-	//
-	//	fmt.Println(entry)
-	//}
-
 }
 
 func main2() {
