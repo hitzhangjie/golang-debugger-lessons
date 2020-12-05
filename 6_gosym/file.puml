@@ -1,0 +1,78 @@
+@startuml
+
+package "gosym" {
+	class "Func" as gosym.Func <<V,Orchid>> {
+		+Entry: uint64
+		+Sym: *gosym.Sym
+		+End: uint64
+		+Params: []*gosym.Sym
+		+Locals: []*gosym.Sym
+		+FrameSize: int
+		+LineTable: *gosym.LineTable
+		+Obj: *gosym.Obj
+	}
+}
+
+	gosym.Func -left-> gosym.Sym
+	gosym.Func -right-> gosym.LineTable
+	gosym.Func -left-> gosym.Obj
+
+
+package "gosym" {
+	class "LineTable" as gosym.LineTable <<E,#FFCC00>> {
+		+Data: []byte
+		+PC: uint64
+		+Line: int
+		+PCToLine(pc: uint64): int
+		+LineToPC(line: int, maxpc: uint64): uint64
+	}
+}
+
+package "gosym" {
+	class "Obj" as gosym.Obj <<V,Orchid>> {
+		+Funcs: []gosym.Func
+		+Paths: []gosym.Sym
+	}
+}
+
+	gosym.Obj -right-> gosym.Func
+	gosym.Obj -down-> gosym.Sym
+
+
+package "gosym" {
+	class "Sym" as gosym.Sym <<V,Orchid>> {
+		+Value: uint64
+		+Type: byte
+		+Name: string
+		+GoType: uint64
+		+Func: *gosym.Func
+		+Static(): bool
+		+PackageName(): string
+		+ReceiverName(): string
+		+BaseName(): string
+	}
+}
+
+	gosym.Sym --> gosym.Func
+
+
+package "gosym" {
+	class "Table" as gosym.Table <<V,Orchid>> {
+		+Syms: []gosym.Sym
+		+Funcs: []gosym.Func
+		+Files: map[string]*gosym.Obj
+		+Objs: []gosym.Obj
+		+PCToFunc(pc: uint64): *gosym.Func
+		+PCToLine(pc: uint64): (file: string, line: int, fn: *gosym.Func)
+		+LineToPC(file: string, line: int): (pc: uint64, fn: *gosym.Func, err: error)
+		+LookupSym(name: string): *gosym.Sym
+		+LookupFunc(name: string): *gosym.Func
+		+SymByAddr(addr: uint64): *gosym.Sym
+	}
+}
+	gosym.Table --> gosym.Obj
+	gosym.Table --> gosym.LineTable
+	gosym.Table ..> gosym.Sym : <<return>>
+	gosym.Table ..> gosym.Func : <<return>>
+
+@enduml

@@ -5,11 +5,7 @@ import (
 	"debug/gosym"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
-
-	"github.com/davecgh/go-spew/spew"
-	"golang.org/x/arch/x86/x86asm"
 )
 
 func main() {
@@ -77,99 +73,10 @@ func main() {
 	fmt.Printf("vaddr to file:lineno, pc = %#x, fn = %s, file:lineno = %s:%d\n", 0x4b86cf, fn.Name, f, l)
 	println()
 
-	fmt.Println("using pclntab: print stacktrace")
+	//---------------------------------------------------------------------
+	// 调用栈信息
+
+	fmt.Println("using lineno table: stacktrace")
 	fmt.Println(strings.Repeat("-", 120))
-
-	printStackTrace(table, 0x4b86cf, 20)
 }
 
-func main2() {
-	wd, _ := os.Getwd()
-	file, err := elf.Open(filepath.Join(wd, "testdata/loop2"))
-	if err != nil {
-		panic(err)
-	}
-	spew.Printf("elf open ok, file:\n")
-	spew.Dump(file)
-
-	os.Exit(1)
-	// 查看section列表
-	for idx, sec := range file.Sections {
-		buf, _ := sec.Data()
-		fmt.Printf("[%d] %-16s %-16s size:%d\n", idx, sec.Name, sec.Type.String(), len(buf))
-	}
-	fmt.Println()
-
-	// 查看指令部分
-	text, _ := file.Section(".text").Data()
-	i := 0
-	count := 0
-	for {
-		if count > 10 {
-			break
-		}
-		inst, err := x86asm.Decode(text[i:], 64)
-		if err != nil {
-			break
-		}
-		fmt.Printf("%#x %-16x %s\n", i, text[i:i+inst.Len], inst.String())
-		i += inst.Len
-		count++
-	}
-	fmt.Println()
-
-	// 查看符号表部分
-	symtab, _ := file.Section(".gosymtab").Data()
-	fmt.Println("symtab size:", len(symtab))
-
-	pclntab, _ := file.Section(".gopclntab").Data()
-	linetab := gosym.NewLineTable(pclntab, file.Entry)
-
-	table, err := gosym.NewTable(symtab, linetab)
-	if err != nil {
-		panic(err)
-	}
-	for k, _ := range table.Files {
-		fmt.Println("file:", k)
-	}
-
-	for _, f := range table.Funcs {
-		fmt.Printf("func: %s\n", f.Name)
-	}
-	//fmt.Println("objs size:", len(table.Objs))
-
-	//for _, sym := range table.Syms {
-	//	fmt.Println("sym: %s\n", sym.Name)
-	//}
-	fmt.Println()
-
-	fmt.Println("main.main entry:", table.LookupFunc("main.main").Entry)
-	pc, fn, err := table.LineToPC("/root/main.go", 15)
-	fmt.Println(pc, fn.Name, err)
-
-	f, l, fn := table.PCToLine(pc)
-	fmt.Println(f, l, fn.Name)
-
-	// print call stack
-	printStackTrace(table, fn.Entry, 3)
-}
-
-var lastFn string
-
-func printStackTrace(pclntab *gosym.Table, pc uint64, depth int) {
-	for i := 0; i < depth; i++ {
-		for {
-			file, ln, fn := pclntab.PCToLine(pc)
-			_ = file
-			_ = ln
-			//fmt.Printf("func: %s, pos:%s:%d\n", fn.Name, file, ln)
-			if fn.Name != lastFn {
-				lastFn = fn.Name
-				fmt.Printf("%s pc:%#x\n", fn.Name, pc)
-				pc = fn.Entry - 1
-				break
-			}
-			pc--
-		}
-	}
-}
