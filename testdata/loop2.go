@@ -13,8 +13,9 @@ func init() {
 	}()
 }
 func main() {
+	pid := os.Getpid()
 	for {
-		fmt.Println("main.main pid:", os.Getpid())
+		fmt.Println("main.main pid:", pid)
 		time.Sleep(time.Second * 3)
 	}
 }

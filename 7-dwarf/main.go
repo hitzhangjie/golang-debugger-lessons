@@ -4,7 +4,6 @@ import (
 	"debug/dwarf"
 	"debug/elf"
 	"fmt"
-	"io"
 	"os"
 )
 
@@ -27,44 +26,102 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	//fmt.Println("read dwarf ok")
 
+	err = parseDebugInfo(dw)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	//for _, cu := range compileUnits {
+	//	fmt.Printf("cu: %+v\n", cu)
+	//}
+
+	//printFuncMainMain(dw)
+}
+
+type Variable struct {
+	Name string
+}
+
+type Function struct {
+	Name      string
+	DeclFile  string
+	Variables []*Variable
+}
+
+type CompileUnit struct {
+	Source []string
+	Funcs  []*Function
+}
+
+var compileUnits = []*CompileUnit{}
+
+func parseDebugInfo(dw *dwarf.Data) error {
 	rd := dw.Reader()
 
-	// next compilation unit
-	for {
+	var curCompileUnit *CompileUnit
+	var curFunction *Function
+
+	for idx := 0; ; idx++ {
 		entry, err := rd.Next()
-		if err == io.EOF {
-			fmt.Println(err)
-			break
+		if err != nil {
+			return fmt.Errorf("iterate entry error: %v", err)
 		}
 		if entry == nil {
-			break
+			return nil
 		}
 
 		if entry.Tag == dwarf.TagCompileUnit {
-			fmt.Println("CompilationUnit:", entry.Field)
+			lrd, err := dw.LineReader(entry)
+			if err != nil {
+				return err
+			}
+
+			cu := &CompileUnit{}
+			curCompileUnit = cu
+
+			for _, v := range lrd.Files() {
+				if v == nil {
+					continue
+				}
+				cu.Source = append(cu.Source, v.Name)
+			}
+			compileUnits = append(compileUnits, cu)
 		}
 
 		if entry.Tag == dwarf.TagSubprogram {
-			// 读取.debug_line关联的行号表信息
-			lrd, err := dw.LineReader(entry)
-			if err != nil {
-				fmt.Println(err)
-				break
+			fn := &Function{
+				Name:     entry.Val(dwarf.AttrName).(string),
+				DeclFile: curCompileUnit.Source[entry.Val(dwarf.AttrDeclFile).(int64)-1],
 			}
-			if lrd == nil {
-				continue
-			}
-			for {
-				lentry := dwarf.LineEntry{}
-				err = lrd.Next(&lentry)
-				if err == io.EOF {
-					break
-				}
-				fmt.Printf("lineTable: %s:%d\n", lentry.File.Name, lentry.Line)
+			curFunction = fn
+			curCompileUnit.Funcs = append(curCompileUnit.Funcs, fn)
+
+			if fn.Name == "main.main" {
+				printEntry(entry)
+				fmt.Printf("main.main is defined in %s\n", fn.DeclFile)
 			}
 		}
 
-		fmt.Println(entry)
+		if entry.Tag == dwarf.TagVariable {
+			variable := &Variable{
+				Name: entry.Val(dwarf.AttrName).(string),
+			}
+			curFunction.Variables = append(curFunction.Variables, variable)
+			if curFunction.Name == "main.main" {
+				printEntry(entry)
+			}
+		}
+	}
+	return nil
+}
+
+func printEntry(entry *dwarf.Entry) {
+	fmt.Println("children:", entry.Children)
+	fmt.Println("offset:", entry.Offset)
+	fmt.Println("tag:", entry.Tag.String())
+	for _, f := range entry.Field {
+		fmt.Println("attr:", f.Attr, f.Val, f.Class)
 	}
 }
