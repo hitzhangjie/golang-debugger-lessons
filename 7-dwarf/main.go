@@ -3,7 +3,9 @@ package main
 import (
 	"debug/dwarf"
 	"debug/elf"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -26,18 +28,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//fmt.Println("read dwarf ok")
 
-	err = parseDebugInfo(dw)
+	err = parseDwarf(dw)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
-	//for _, cu := range compileUnits {
-	//	fmt.Printf("cu: %+v\n", cu)
-	//}
+	pc, err := find("/root/debugger101/testdata/loop2.go", 16)
+	if err != nil {
+		panic(err)
+	}
 
-	//printFuncMainMain(dw)
+	fmt.Printf("found pc: %#x\n", pc)
 }
 
 type Variable struct {
@@ -53,11 +55,12 @@ type Function struct {
 type CompileUnit struct {
 	Source []string
 	Funcs  []*Function
+	Lines  []*dwarf.LineEntry
 }
 
 var compileUnits = []*CompileUnit{}
 
-func parseDebugInfo(dw *dwarf.Data) error {
+func parseDwarf(dw *dwarf.Data) error {
 	rd := dw.Reader()
 
 	var curCompileUnit *CompileUnit
@@ -88,6 +91,18 @@ func parseDebugInfo(dw *dwarf.Data) error {
 				cu.Source = append(cu.Source, v.Name)
 			}
 			compileUnits = append(compileUnits, cu)
+
+			for {
+				var e dwarf.LineEntry
+				err := lrd.Next(&e)
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					return err
+				}
+				curCompileUnit.Lines = append(curCompileUnit.Lines, &e)
+			}
 		}
 
 		if entry.Tag == dwarf.TagSubprogram {
@@ -124,4 +139,22 @@ func printEntry(entry *dwarf.Entry) {
 	for _, f := range entry.Field {
 		fmt.Println("attr:", f.Attr, f.Val, f.Class)
 	}
+}
+
+func find(file string, lineno int) (pc uint64, err error) {
+	for _, cu := range compileUnits {
+		for _, e := range cu.Lines {
+			if e.File.Name != file {
+				continue
+			}
+			if e.Line != lineno {
+				continue
+			}
+			if !e.IsStmt {
+				continue
+			}
+			return e.Address, nil
+		}
+	}
+	return 0, errors.New("not found")
 }
