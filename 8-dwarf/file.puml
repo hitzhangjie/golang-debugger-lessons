@@ -1,0 +1,134 @@
+@startuml
+
+
+package "dwarf" {
+	class "Attr" as dwarf.Attr <<V,Orchid>> {
+		+String(): string
+		+GoString(): string
+	}
+}
+
+
+package "dwarf" {
+	class "Class" as dwarf.Class <<V,Orchid>> {
+		+GoString(): string
+		+String(): string
+	}
+}
+
+
+package "dwarf" {
+	class "Data" as dwarf.Data <<E,#FFCC00>> {
+		+Reader(): *dwarf.Reader
+		+Ranges(e: *dwarf.Entry): ([][2]uint64, error)
+		+LineReader(cu: *dwarf.Entry): (*dwarf.LineReader, error)
+		+Type(off: dwarf.Offset): (dwarf.Type, error)
+		+AddTypes(name: string, types: []byte): error
+		+AddSection(name: string, contents: []byte): error
+	}
+}
+
+	dwarf.Data ..> dwarf.Reader : <<return>>
+	dwarf.Data ..> dwarf.Entry : <<use>>
+	dwarf.Data ..> dwarf.LineReader : <<return>>
+	dwarf.Data .right.> dwarf.Type : <<return>>
+
+package "dwarf" {
+	class "Entry" as dwarf.Entry <<V,Orchid>> {
+		+Offset: dwarf.Offset
+		+Tag: dwarf.Tag
+		+Children: bool
+		+Field: []dwarf.Field
+		+Val(a: dwarf.Attr): interface{}
+		+AttrField(a: dwarf.Attr): *dwarf.Field
+	}
+}
+
+	dwarf.Entry --> dwarf.Tag
+	dwarf.Entry -right-> dwarf.Field
+	dwarf.Entry --> dwarf.Attr : <<use>>
+
+
+package "dwarf" {
+	class "Field" as dwarf.Field <<V,Orchid>> {
+		+Attr: dwarf.Attr
+		+Val: interface{}
+		+Class: dwarf.Class
+	}
+}
+
+	dwarf.Field --> dwarf.Attr
+	dwarf.Field --> dwarf.Class
+
+
+package "dwarf" {
+	class "LineEntry" as dwarf.LineEntry <<V,Orchid>> {
+		+Address: uint64
+		+OpIndex: int
+		+File: *dwarf.LineFile
+		+Line: int
+		+Column: int
+		+IsStmt: bool
+		+BasicBlock: bool
+		+PrologueEnd: bool
+		+EpilogueBegin: bool
+		+ISA: int
+		+Discriminator: int
+		+EndSequence: bool
+	}
+}
+
+	dwarf.LineEntry --> dwarf.LineFile
+
+
+package "dwarf" {
+	class "LineFile" as dwarf.LineFile <<V,Orchid>> {
+		+Name: string
+		+Mtime: uint64
+		+Length: int
+	}
+}
+
+
+package "dwarf" {
+	class "LineReader" as dwarf.LineReader <<E,#FFCC00>> {
+		+Next(entry: *dwarf.LineEntry): error
+		+Tell(): dwarf.LineReaderPos
+		+Seek(pos: dwarf.LineReaderPos)
+		+Reset()
+		+Files(): []*dwarf.LineFile
+		+SeekPC(pc: uint64, entry: *dwarf.LineEntry): error
+	}
+}
+
+	dwarf.LineReader ..> dwarf.LineEntry : <<use>>
+
+package "dwarf" {
+	class "Reader" as dwarf.Reader <<E,#FFCC00>> {
+		+AddressSize(): int
+		+ByteOrder(): binary.ByteOrder
+		+Seek(off: dwarf.Offset)
+		+Next(): (*dwarf.Entry, error)
+		+SkipChildren()
+		+SeekPC(pc: uint64): (*dwarf.Entry, error)
+	}
+}
+
+	dwarf.Reader ..> dwarf.Entry : <<use>>
+
+package "dwarf" {
+	interface "Type" as dwarf.Type {
+		+Common(): *dwarf.CommonType
+		+Size(): int64
+		+String(): string
+	}
+}
+
+package "dwarf" {
+   	class "Tag" as dwarf.Tag <<V,Orchid>> {
+   		+String(): string
+   		+GoString(): string
+   	}
+}
+
+@enduml
