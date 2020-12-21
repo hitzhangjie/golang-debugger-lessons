@@ -20,7 +20,7 @@ type buf struct {
 	Err   error
 }
 
-func MakeBuf(d *dwarf.Data, name string, off dwarf.Offset, data []byte) buf {
+func NewBuf(d *dwarf.Data, name string, off dwarf.Offset, data []byte) buf {
 	return buf{d, name, off, data, nil}
 }
 

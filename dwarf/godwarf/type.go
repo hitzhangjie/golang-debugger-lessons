@@ -820,7 +820,7 @@ func readType(d *dwarf.Data, name string, r *dwarf.Reader, off dwarf.Offset, typ
 						// Empty exprloc. f.ByteOffset=0.
 						break
 					}
-					b := util.MakeBuf(d, "location", 0, loc)
+					b := util.NewBuf(d, "location", 0, loc)
 					op_ := op.Opcode(b.Uint8())
 					switch op_ {
 					case op.DW_OP_plus_uconst:
