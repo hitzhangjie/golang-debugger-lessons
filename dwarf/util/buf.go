@@ -13,44 +13,15 @@ import (
 
 // Data buffer being decoded.
 type buf struct {
-	dwarf  *dwarf.Data
-	format dataFormat
-	name   string
-	off    dwarf.Offset
-	data   []byte
-	Err    error
+	dwarf *dwarf.Data
+	name  string
+	off   dwarf.Offset
+	data  []byte
+	Err   error
 }
 
-// Data format, other than byte order. This affects the handling of
-// certain field formats.
-type dataFormat interface {
-	// DWARF version number.  Zero means unknown.
-	version() int
-
-	// 64-bit DWARF format?
-	dwarf64() (dwarf64 bool, isKnown bool)
-
-	// Size of an address, in bytes.  Zero means unknown.
-	addrsize() int
-}
-
-// Some parts of DWARF have no data format, e.g., abbrevs.
-type UnknownFormat struct{}
-
-func (u UnknownFormat) version() int {
-	return 0
-}
-
-func (u UnknownFormat) dwarf64() (bool, bool) {
-	return false, false
-}
-
-func (u UnknownFormat) addrsize() int {
-	return 0
-}
-
-func MakeBuf(d *dwarf.Data, format dataFormat, name string, off dwarf.Offset, data []byte) buf {
-	return buf{d, format, name, off, data, nil}
+func MakeBuf(d *dwarf.Data, name string, off dwarf.Offset, data []byte) buf {
+	return buf{d, name, off, data, nil}
 }
 
 func (b *buf) slice(length int) buf {
