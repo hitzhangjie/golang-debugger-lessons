@@ -6,6 +6,7 @@ import (
 	"lessons/dwarf/godwarf"
 )
 
+// Variable a variable representation.
 type Variable struct {
 	*godwarf.Tree
 	// Depth represents the depth of the lexical block in which this variable

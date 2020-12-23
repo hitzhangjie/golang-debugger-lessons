@@ -33,7 +33,7 @@ func (reader *Reader) SeekToEntry(entry *dwarf.Entry) error {
 	return err
 }
 
-// Returns the address for the named entry.
+// AddrFor returns the address for the named entry.
 func (reader *Reader) AddrFor(name string, staticBase uint64, ptrSize int) (uint64, error) {
 	entry, err := reader.FindEntryNamed(name, false)
 	if err != nil {
@@ -50,8 +50,9 @@ func (reader *Reader) AddrFor(name string, staticBase uint64, ptrSize int) (uint
 	return uint64(addr), nil
 }
 
-// Returns the address for the named struct member. Expects the reader to be at the parent entry
-// or one of the parents children, thus does not seek to parent by itself.
+// AddrForMember returns the address for the named struct member.
+// Expects the reader to be at the parent entry or one of the parents
+// children, thus does not seek to parent by itself.
 func (reader *Reader) AddrForMember(member string, initialInstructions []byte, ptrSize int) (uint64, error) {
 	for {
 		entry, err := reader.NextMemberVariable()
@@ -74,6 +75,7 @@ func (reader *Reader) AddrForMember(member string, initialInstructions []byte, p
 	}
 }
 
+// TypeNotFoundErr type not found error
 var TypeNotFoundErr = errors.New("no type entry found, use 'types' for a list of valid types")
 
 // SeekToType moves the reader to the type specified by the entry,
@@ -113,6 +115,7 @@ func (reader *Reader) SeekToType(entry *dwarf.Entry, resolveTypedefs bool, resol
 	return nil, TypeNotFoundErr
 }
 
+// NextType returns next type entry
 func (reader *Reader) NextType() (*dwarf.Entry, error) {
 	for entry, err := reader.Next(); entry != nil; entry, err = reader.Next() {
 		if err != nil {
@@ -120,7 +123,11 @@ func (reader *Reader) NextType() (*dwarf.Entry, error) {
 		}
 
 		switch entry.Tag {
-		case dwarf.TagArrayType, dwarf.TagBaseType, dwarf.TagClassType, dwarf.TagStructType, dwarf.TagUnionType, dwarf.TagConstType, dwarf.TagVolatileType, dwarf.TagRestrictType, dwarf.TagEnumerationType, dwarf.TagPointerType, dwarf.TagSubroutineType, dwarf.TagTypedef, dwarf.TagUnspecifiedType:
+		case dwarf.TagBaseType, dwarf.TagArrayType, dwarf.TagEnumerationType,
+			dwarf.TagClassType, dwarf.TagStructType, dwarf.TagUnionType,
+			dwarf.TagConstType, dwarf.TagVolatileType, dwarf.TagRestrictType,
+			dwarf.TagPointerType, dwarf.TagSubroutineType, dwarf.TagTypedef,
+			dwarf.TagUnspecifiedType:
 			return entry, nil
 		}
 	}
@@ -151,7 +158,8 @@ func (reader *Reader) SeekToTypeNamed(name string) (*dwarf.Entry, error) {
 	return nil, TypeNotFoundErr
 }
 
-// Finds the entry for 'name'.
+// FindEntryNamed finds the entry for 'name'. 'member' specifies whether 'name' is a member or not,
+// and 'member' implies the expected tag of dwarf.Entry.
 func (reader *Reader) FindEntryNamed(name string, member bool) (*dwarf.Entry, error) {
 	depth := 1
 	for entry, err := reader.Next(); entry != nil; entry, err = reader.Next() {
@@ -175,7 +183,9 @@ func (reader *Reader) FindEntryNamed(name string, member bool) (*dwarf.Entry, er
 				continue
 			}
 		} else {
-			if entry.Tag != dwarf.TagVariable && entry.Tag != dwarf.TagFormalParameter && entry.Tag != dwarf.TagStructType {
+			if entry.Tag != dwarf.TagVariable &&
+				entry.Tag != dwarf.TagFormalParameter &&
+				entry.Tag != dwarf.TagStructType {
 				continue
 			}
 		}
@@ -189,6 +199,7 @@ func (reader *Reader) FindEntryNamed(name string, member bool) (*dwarf.Entry, er
 	return nil, fmt.Errorf("could not find symbol value for %s", name)
 }
 
+// InstructionsForEntryNamed returns instructions for 'name'.
 func (reader *Reader) InstructionsForEntryNamed(name string, member bool) ([]byte, error) {
 	entry, err := reader.FindEntryNamed(name, member)
 	if err != nil {
@@ -207,6 +218,7 @@ func (reader *Reader) InstructionsForEntryNamed(name string, member bool) ([]byt
 	return instr, nil
 }
 
+// InstructionsForEntry returns the instructions for 'entry'.
 func (reader *Reader) InstructionsForEntry(entry *dwarf.Entry) ([]byte, error) {
 	if entry.Tag == dwarf.TagMember {
 		instructions, ok := entry.Val(dwarf.AttrDataMemberLoc).([]byte)
@@ -276,6 +288,7 @@ func (reader *Reader) NextPackageVariable() (*dwarf.Entry, error) {
 	return nil, nil
 }
 
+// NextCompileUnit moves the reader to the next compile unit debug entry.
 func (reader *Reader) NextCompileUnit() (*dwarf.Entry, error) {
 	for entry, err := reader.Next(); entry != nil; entry, err = reader.Next() {
 		if err != nil {
