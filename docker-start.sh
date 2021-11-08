@@ -10,6 +10,6 @@
 # debugger need priviledges including, ptrace, etc.
 docker run -it                                                              \
 -v `pwd -P`:/root/debugger101                                               \
---name debugger.env --cap-add ALL                                           \
+--name debugger.lessons.env --cap-add ALL                                           \
 --rm debugger.env                                                           \
 /bin/bash
