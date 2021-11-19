@@ -55,7 +55,7 @@ func GetExecutable(pid int) (string, error) {
 	exeLink := fmt.Sprintf("/proc/%d/exe", pid)
 	exePath, err := os.Readlink(exeLink)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("find executable by pid err: %w", err)
 	}
 	return exePath, nil
 }
