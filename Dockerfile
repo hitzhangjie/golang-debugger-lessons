@@ -1,4 +1,4 @@
-FROM hitzhangjie/linux101:go1.13
+FROM hitzhangjie/linux101:go1.19
 
 USER root
 
