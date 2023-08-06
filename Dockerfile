@@ -1,11 +1,17 @@
-FROM hitzhangjie/linux101
+FROM hitzhangjie/linux101:go1.13
 
 USER root
 
 ENV	GOPROXY=https://goproxy.cn,direct
 
-RUN mkdir /root/debugger101 && \
-	yum install -y libdwarf-tools.x86_64 && \
+RUN yum install -y libdwarf-tools.x86_64 		  && \
 	yum install -y binutils.x86_64
 
-WORKDIR /root/debugger101
+RUN git clone https://github.com/cli/cli /tmp.cli && \
+	cd /tmp.cli/cmd/gh							  && \	
+	git checkout v2.0.0							  && \
+	go install -v
+
+RUN mkdir /root/workspaces
+
+WORKDIR /root/workspaces/godbg
