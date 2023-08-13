@@ -9,10 +9,17 @@ import (
 	"golang.org/x/arch/x86/x86asm"
 )
 
-func main() {
+var usage = `Usage:
+	go run main.go <pid>
 
+	args:
+	- pid: specify the pid of process to attach
+`
+
+func main() {
 	if len(os.Args) != 2 {
-		panic("invalid params")
+		fmt.Println(usage)
+		os.Exit(1)
 	}
 
 	// pid
