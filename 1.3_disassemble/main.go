@@ -40,12 +40,15 @@ func main() {
 	}
 
 	offset := 0
-	for {
+	for offset < len(buf) {
 		inst, err := x86asm.Decode(buf[offset:], 64)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			fmt.Printf("\tbuf[%d] == %0x", offset, buf[offset])
+			offset++
+			continue
 		}
-		fmt.Printf("%8x %s\n", offset, inst.String())
+		fmt.Printf("%8x %s\n", offset+0x401000, inst.String())
 		offset += inst.Len
 	}
 }
