@@ -36,5 +36,4 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s unknown cmd\n\n", cmd)
 		os.Exit(1)
 	}
-
 }
