@@ -1,6 +1,6 @@
-课程目标：演示下如何跟踪多线程程序
+## 课程目标：演示下如何跟踪多线程程序
 
-测试方法：
+### 测试方法：
 
 1、先看看testdata/fork.c，这个程序每隔一段时间就创建一个pthread线程出来
 
@@ -60,3 +60,9 @@ eventmsg: new thread lwp pid: 36398
 检查是不是clone事件呢，参考 man 2 ptrace手册对选项PTRACE_O_TRACECLONE的介绍部分，有解释clone状况下的status值如何编码。
 
 4、另外设置了选项PTRACE_O_TRACECLONE之后，新线程会自动被trace，所以新线程也会被暂停执行，此时如果希望新线程恢复执行，我们需要显示将其syscall.PtraceDetach或者执行syscall.PtraceContinue操作来让新线程恢复执行。
+
+### 引申一下
+
+至此，测试方法介绍完了，我们可以引申下，在我们这个测试的基础上我们可以提示用户，你想跟踪当前线程呢，还是想跟踪新线程呢？类似地这个在gdb调试多进程、多线程程序时时非常有用的，联想下gdb中的 `set follow-fork-mode` ，我们可以选择 parent、child、ask 中的一种，并且允许在调试期间在上述选项之间进行切换，如果我们提前规划好了，fork后要跟踪当前线程还是子线程（or进程），这个功能特性就非常的有用。
+
+dlv里面提供了一种不同的做法，它是通过threads来切换被调试的线程的，实际上go也不会暴漏线程变成api给开发者，大家大多数时候应该也用不到去显示跟踪clone新建线程后新线程的执行情况，所以应该极少像gdb set follow-fork-mode调试模式一样去使用。我们这里只是引申一下。
