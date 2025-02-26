@@ -42,6 +42,7 @@
       0x00007f79aa703eb0 <+64>:    mov    %r12d,%edx
       0x00007f79aa703eb3 <+67>:    mov    %rbp,%rsi
    ```
+
    所以我们可以选择一个指令地址 0x00007f79aa703ea8，先用这个来进行测试
 5. 继续执行我们的测试
 
@@ -65,6 +66,7 @@
    ```
 
    然后我们发现tracee停在的位置并不是我们想让它停的位置7f79aa703ea8，差的很远，这是什么情况呢？
+
    - tracee早就开始执行了，gdb attach当时执行一瞬间的指令位置detach后立马就执行结束了，我们随便拿个指令地址不一定能被执行到；
    - 我们需要找一个循环执行到的指令位置来作为断点，or 我们tracer直接启动tracee+attach一次性完成；
 
@@ -74,7 +76,8 @@
    对吧，我们这个shell一直在echo，这个函数应该可以被不停地执行到，就选这个位置了 …… 测试后不行，停下来位置不符合预期。
 
    继续gdb找，waitpid吧，sleep入手？
-   ```bash
+
+```bash
    (gdb) bt
     #0  0x00007fd263e8ae70 in waitpid () from /lib64/libc.so.6
     #1  0x000055a9ad8587a9 in waitchld.isra ()
@@ -98,42 +101,41 @@
    ```bash
     (gdb) b waitpid
      Breakpoint 1 at 0x7fd263e8ae70
-   ```
+```
 
    继续测试./11_continue，不行，:(
    ===step2===: supposing running `dlv> break <address>` here
    read instruction data fail: input/output error
-   
+
    ps：上面两个都还好说，有个问题，tracee为什么停在了这个位置呢？7f79aa64a8b1，我们有没有在这个位置添加断点 …… 停下来不意味着就都是断点。这个后面可以在展开介绍下。
    因为地址每次会变? 这个地址不应该是线性地址吗，而且也没有开asan，地址应该不会变，weired :( TODO 后续待查
 
 7、算了，我们手动写一个循环打印的go程序来测试吧
 
-   1. 编译test_assets/forloopprint.go
-   2. 运行test_assets/forloopprint，记下输出的pid
-   3. dlv attach <pid> 然后 b time.Sleep (Breakpoint 1 set at 0x45f70e for time.Sleep() /usr/local/go/src/runtime/time.go:178)
-   4. 用这个地址 0x45f70e 来作为 11_continue 测试时的输入地址
-   5. ./11_continue <pid>
+1. 编译testdata/forloopprint.go
+2. 运行testdata/forloopprint，记下输出的pid
+3. dlv attach `<pid>` 然后 b time.Sleep (Breakpoint 1 set at 0x45f70e for time.Sleep() /usr/local/go/src/runtime/time.go:178)
+4. 用这个地址 0x45f70e 来作为 11_continue 测试时的输入地址
+5. ./11_continue `<pid>`
 
-      ```bash
-      zhangjie🦀 11_continue(master) $ ./11_continue 226046
-      ===step1===: supposing running `dlv attach pid` here
-      process 226046 attach succ
-      process 226046 stopped
-      tracee stopped at 40332e
+   ```bash
+   zhangjie🦀 11_continue(master) $ ./11_continue 226046
+   ===step1===: supposing running `dlv attach pid` here
+   process 226046 attach succ
+   process 226046 stopped
+   tracee stopped at 40332e
 
-      enter a address you want to add breakpoint
-      0x45f70e
-      you entered 45f70e
+   enter a address you want to add breakpoint
+   0x45f70e
+   you entered 45f70e
 
-      ===step2===: supposing running `dlv> break <address>` here
-      add breakpoint ok
+   ===step2===: supposing running `dlv> break <address>` here
+   add breakpoint ok
 
-      ===step3===: supposing running `dlv> continue` here
-      process 226046 stopped
-      tracee stopped at 45f70f
-      ```
+   ===step3===: supposing running `dlv> continue` here
+   process 226046 stopped
+   tracee stopped at 45f70f
+   ```
+   断点位置为45f70e，执行continue后最后停下来的位置是45f70f，刚好是目标位置patch后的下一个字节位置，符合预期。
 
-      断点位置为45f70e，执行continue后最后停下来的位置是45f70f，刚好是目标位置patch后的下一个字节位置，符合预期。
-
-      测试结束。
+   测试结束。
