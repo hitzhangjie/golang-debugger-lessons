@@ -20,7 +20,7 @@ process: 35573, thread: 36398
 ...
 ```
 
-2、我们同时观察 ./20_trace_new_threads `<上述fork程序进程pid> 的执行情况`
+2、我们同时观察 ./20_trace_new_threads `<上述fork程序进程pid>` 的执行情况
 
 ```
 zhangjie🦀 20_trace_new_threads(master) $ ./20_trace_new_threads 35573
