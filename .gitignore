@@ -3,9 +3,11 @@
 *
 !*.*
 !*/
+!Makefile
 
 # ignore IDE settings
 .idea
 .vscode/
+
 
 
