@@ -1,41 +1,30 @@
-package main
+package elf_test
 
 import (
 	"debug/elf"
 	"debug/gosym"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"testing"
 	"text/tabwriter"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/arch/x86/x86asm"
 )
 
-func main() {
-	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: go run main.go <prog>")
-		os.Exit(1)
-	}
-	prog := os.Args[1]
+var testELFBinary = "../testdata/loop2"
 
-	//-----------------------------------------------------------------------
-	// elf file
-
-	fmt.Println("processing elf binary:", prog)
-	println()
-
+func TestParseELFFile(t *testing.T) {
 	// open elf
-	file, err := elf.Open(prog)
-	if err != nil {
-		panic(err)
-	}
-	//spew.Dump(file)
+	file, err := elf.Open(testELFBinary)
+	require.Nil(t, err)
+	// prettyprint(file)
 
 	//-----------------------------------------------------------------------
 	// prog headers
-
 	fmt.Println("dumping the elf.Progs")
 	fmt.Println(strings.Repeat("-", 120))
 
@@ -93,49 +82,10 @@ func main() {
 
 	dataSection := file.Section(".data")
 	dat, err = dataSection.Data()
-	if err != nil {
-		panic(err)
-	}
-	_ = dat
+	require.Nil(t, err)
 	fmt.Printf("% x\n", dat[:32])
-}
 
-func main2() {
-	wd, _ := os.Getwd()
-	file, err := elf.Open(filepath.Join(wd, "testdata/loop2"))
-	if err != nil {
-		panic(err)
-	}
-	spew.Printf("elf open ok, file:\n")
-	spew.Dump(file)
-
-	os.Exit(1)
-	// 查看section列表
-	for idx, sec := range file.Sections {
-		buf, _ := sec.Data()
-		fmt.Printf("[%d] %-16s %-16s size:%d\n", idx, sec.Name, sec.Type.String(), len(buf))
-	}
-	fmt.Println()
-
-	// 查看指令部分
-	text, _ := file.Section(".text").Data()
-	i := 0
-	count := 0
-	for {
-		if count > 10 {
-			break
-		}
-		inst, err := x86asm.Decode(text[i:], 64)
-		if err != nil {
-			break
-		}
-		fmt.Printf("%#x %-16x %s\n", i, text[i:i+inst.Len], inst.String())
-		i += inst.Len
-		count++
-	}
-	fmt.Println()
-
-	// 查看符号表部分
+	// 查看gopclntab部分
 	symtab, _ := file.Section(".gosymtab").Data()
 	fmt.Println("symtab size:", len(symtab))
 
@@ -143,27 +93,68 @@ func main2() {
 	linetab := gosym.NewLineTable(pclntab, file.Entry)
 
 	table, err := gosym.NewTable(symtab, linetab)
-	if err != nil {
-		panic(err)
-	}
+	require.Nil(t, err)
+
+	fmt.Println("dump files:")
+	i := 0
 	for k, _ := range table.Files {
 		fmt.Println("file:", k)
+		i++
+		if i > 10 {
+			break
+		}
 	}
+	fmt.Println("number of files:", len(table.Files))
+	fmt.Println()
 
-	for _, f := range table.Funcs {
+	fmt.Println("dump funcs:")
+	for i, f := range table.Funcs {
 		fmt.Printf("func: %s\n", f.Name)
+		if i > 10 {
+			break
+		}
 	}
-	//fmt.Println("objs size:", len(table.Objs))
+	fmt.Println("number of funcs:", len(table.Funcs))
+	fmt.Println()
 
-	//for _, sym := range table.Syms {
-	//	fmt.Println("sym: %s\n", sym.Name)
-	//}
+	fmt.Println("dump syms:")
+	for i, sym := range table.Syms {
+		fmt.Printf("sym: %s\n", sym.Name)
+		if i > 10 {
+			break
+		}
+	}
+	fmt.Println("number of syms:", len(table.Syms))
 	fmt.Println()
 
 	fmt.Println("main.main entry:", table.LookupFunc("main.main").Entry)
-	pc, fn, err := table.LineToPC("/root/main.go", 15)
+	fp, lineno := func() (string, int) {
+		wd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+		return filepath.Join(filepath.Dir(wd), "testdata/loop2.go"), 15
+	}()
+	pc, fn, err := table.LineToPC(fp, lineno)
+	require.Nil(t, err)
 	fmt.Println(pc, fn.Name, err)
 
 	f, l, fn := table.PCToLine(pc)
 	fmt.Println(f, l, fn.Name)
+
+	// stacktrace，go运行时加载了.gosymtab, .gopclntab之后，直接指定pc就能拿到stacktrace吗？
+	// 不能，还是需要目标程序必须运行起来才可以，这个stack肯定是回溯栈帧记录才可以打印出这个堆栈的。
+	//
+	// 只有可能回溯这个调用栈记录，才能一次次回溯找到caller的pc地址，才能根据这个pclntab找到源码
+	// 层面的调用栈信息 ... OK, 到此结束。
+	//
+	// runtime.Stack()
+}
+
+func prettyprint(v any) {
+	b, err := json.MarshalIndent(v, "", "\t")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(b))
 }
