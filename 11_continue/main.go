@@ -49,10 +49,9 @@ func main() {
 
 	// check target process stopped or not
 	var status syscall.WaitStatus
-	var options int
 	var rusage syscall.Rusage
 
-	_, err = syscall.Wait4(int(pid), &status, options, &rusage)
+	_, err = syscall.Wait4(int(pid), &status, syscall.WSTOPPED, &rusage)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "process %d wait error: %v\n\n", pid, err)
 		os.Exit(1)
