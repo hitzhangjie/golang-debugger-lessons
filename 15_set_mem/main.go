@@ -102,13 +102,13 @@ func main() {
 	fmt.Fprintf(os.Stdout, "===step2===: supposing running `dlv> set *addr = 0xaf` here\n")
 
 	var data [1]byte
-	n, err := syscall.PtracePeekText(int(pid), uintptr(addr), data[:])
+	n, err := syscall.PtracePeekData(int(pid), uintptr(addr), data[:])
 	if err != nil || n != 1 {
 		fmt.Fprintf(os.Stderr, "read data fail: %v\n", err)
 		os.Exit(1)
 	}
 
-	n, err = syscall.PtracePokeText(int(pid), uintptr(addr), []byte{byte(val)})
+	n, err = syscall.PtracePokeData(int(pid), uintptr(addr), []byte{byte(val)})
 	if err != nil || n != 1 {
 		fmt.Fprintf(os.Stderr, "write data fail: %v\n", err)
 		os.Exit(1)
