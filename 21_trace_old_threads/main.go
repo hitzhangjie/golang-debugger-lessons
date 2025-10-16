@@ -47,58 +47,54 @@ func main() {
 	}
 	fmt.Fprintf(os.Stdout, "threads: %v\n", threads)
 
-	// prompt user which thread to attach
-	var last int64
+	// attach to all threads for tracing
+	fmt.Fprintf(os.Stdout, "===step3===: attach to all threads for tracing\n")
 
-	// attach thread <n>, or switch thread to another one thread <m>
-	for {
-		fmt.Fprintf(os.Stdout, "===step3===: supposing running `dlv> thread <n>` here\n")
-		var target int64
-		n, err := fmt.Fscanf(os.Stdin, "%d\n", &target)
-		if n == 0 || err != nil || target <= 0 {
-			panic("invalid input, thread id should > 0")
-		}
+	attachedThreads := make(map[int]bool)
 
-		if last > 0 {
-			if err := syscall.PtraceDetach(int(last)); err != nil {
-				fmt.Fprintf(os.Stderr, "switch from thread %d to thread %d error: %v\n", last, target, err)
-				os.Exit(1)
-			}
-			fmt.Fprintf(os.Stderr, "switch from thread %d thread %d\n", last, target)
-		}
-
-		// attach
-		err = syscall.PtraceAttach(int(target))
+	// attach to all threads
+	for _, tid := range threads {
+		err := syscall.PtraceAttach(tid)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "thread %d attach error: %v\n\n", target, err)
-			os.Exit(1)
+			fmt.Fprintf(os.Stderr, "thread %d attach error: %v\n", tid, err)
+			continue
 		}
-		fmt.Fprintf(os.Stdout, "process %d attach succ\n\n", target)
+		attachedThreads[tid] = true
+		fmt.Fprintf(os.Stdout, "thread %d attached successfully\n", tid)
+	}
 
-		// check target process stopped or not
+	fmt.Fprintf(os.Stdout, "attached to %d threads total\n\n", len(attachedThreads))
+
+	// wait for all attached threads to stop
+	fmt.Fprintf(os.Stdout, "===step4===: wait for all threads to stop\n")
+	for tid := range attachedThreads {
 		var status syscall.WaitStatus
 		var rusage syscall.Rusage
-		_, err = syscall.Wait4(int(target), &status, 0, &rusage)
+		_, err := syscall.Wait4(tid, &status, 0, &rusage)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "process %d wait error: %v\n\n", target, err)
-			os.Exit(1)
+			fmt.Fprintf(os.Stderr, "thread %d wait error: %v\n", tid, err)
+			continue
 		}
 		if !status.Stopped() {
-			fmt.Fprintf(os.Stderr, "process %d not stopped\n\n", target)
-			os.Exit(1)
+			fmt.Fprintf(os.Stderr, "thread %d not stopped\n", tid)
+			continue
 		}
-		fmt.Fprintf(os.Stdout, "process %d stopped\n\n", target)
-
-		regs := syscall.PtraceRegs{}
-		if err := syscall.PtraceGetRegs(int(target), &regs); err != nil {
-			fmt.Fprintf(os.Stderr, "get regs fail: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Fprintf(os.Stdout, "tracee stopped at %0x\n", regs.PC())
-
-		last = target
-		time.Sleep(time.Second)
+		fmt.Fprintf(os.Stdout, "thread %d stopped\n", tid)
 	}
+
+	// show current state of all traced threads
+	fmt.Fprintf(os.Stdout, "\n===step5===: show current state of all traced threads\n")
+	for tid := range attachedThreads {
+		regs := syscall.PtraceRegs{}
+		if err := syscall.PtraceGetRegs(tid, &regs); err != nil {
+			fmt.Fprintf(os.Stderr, "thread %d get regs fail: %v\n", tid, err)
+			continue
+		}
+		fmt.Fprintf(os.Stdout, "thread %d stopped at %0x\n", tid, regs.PC())
+	}
+
+	fmt.Fprintf(os.Stdout, "\nAll threads are now being traced. Use Ctrl+C to exit.\n")
+	time.Sleep(time.Minute)
 }
 
 // checkPid check whether pid is valid process's id
