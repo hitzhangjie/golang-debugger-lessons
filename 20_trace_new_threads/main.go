@@ -71,7 +71,9 @@ func main() {
 	// step2: setup to trace all new threads creation events
 	time.Sleep(time.Second * 2)
 
-	opts := syscall.PTRACE_O_TRACEFORK | syscall.PTRACE_O_TRACEVFORK | syscall.PTRACE_O_TRACECLONE
+	//opts := syscall.PTRACE_O_TRACEFORK | syscall.PTRACE_O_TRACEVFORK | syscall.PTRACE_O_TRACECLONE
+	opts := syscall.PTRACE_O_TRACECLONE
+
 	if err := syscall.PtraceSetOptions(int(pid), opts); err != nil {
 		fmt.Fprintf(os.Stderr, "set options fail: %v\n", err)
 		os.Exit(1)
